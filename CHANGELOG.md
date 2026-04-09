@@ -9,6 +9,7 @@ All notable changes to this repo will be documented here.
 - project status and next-iteration parking-lot notes
 - `docs/REV_B_ACTION_LIST.md` with the first concrete redesign checklist for the 26 V solenoid issue and HAT-board connector alignment issue
 - `docs/FIRST_POWERUP_CHECKLIST.md` for the staged 5 V-only firmware bring-up process
+- `docs/INITIAL_STUFFING_GUIDE.md` with a practical populate-now vs populate-later recommendation for safe first bring-up
 
 ### Changed
 - merged the current uploaded KiCad files for both boards into the organized `hardware/` layout
