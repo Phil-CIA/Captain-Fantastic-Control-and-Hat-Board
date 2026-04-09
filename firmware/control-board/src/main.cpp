@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #include "debug_oled_config.h"
 #include "direct_input_config.h"
@@ -27,6 +29,9 @@ uint32_t lastOutputTestMs = 0;
 uint32_t displayCounter = 0;
 int8_t activeOutput = -1;
 bool previousInputState[DIRECT_INPUT_COUNT] = {};
+Adafruit_SSD1306 debugOled(CAPTAIN_DEBUG_OLED_WIDTH, CAPTAIN_DEBUG_OLED_HEIGHT, &Wire, CAPTAIN_DEBUG_OLED_RESET_PIN);
+bool debugOledReady = false;
+uint8_t debugOledAddress = CAPTAIN_DEBUG_OLED_I2C_ADDRESS_PRIMARY;
 
 bool probeI2CAddress(uint8_t address) {
     Wire.beginTransmission(address);
@@ -69,8 +74,60 @@ void reportDebugOledStatus() {
                       (primaryFound && secondaryFound) ? " and " : "",
                       secondaryFound ? "0x3D" : "");
     } else {
-        Serial.println("Debug OLED not detected at 0x3C/0x3D; confirm address and controller");
+        Serial.println("Debug OLED not detected at 0x3C/0x3D; confirm wiring and address");
     }
+}
+
+void writeDebugOledStatus(const char* line1, const char* line2 = nullptr, const char* line3 = nullptr) {
+    if (!debugOledReady) {
+        return;
+    }
+
+    debugOled.clearDisplay();
+    debugOled.setTextSize(1);
+    debugOled.setTextColor(SSD1306_WHITE);
+    debugOled.setCursor(0, 0);
+    debugOled.println(F("Captain Ctrl"));
+    debugOled.println(F("SSD1306 debug"));
+
+    if (line1 != nullptr) {
+        debugOled.println(line1);
+    }
+    if (line2 != nullptr) {
+        debugOled.println(line2);
+    }
+    if (line3 != nullptr) {
+        debugOled.println(line3);
+    }
+
+    debugOled.display();
+}
+
+void initDebugOled() {
+    if (!CAPTAIN_DEBUG_OLED_ENABLED) {
+        return;
+    }
+
+    const uint8_t candidateAddresses[2] = {
+        CAPTAIN_DEBUG_OLED_I2C_ADDRESS_PRIMARY,
+        CAPTAIN_DEBUG_OLED_I2C_ADDRESS_SECONDARY
+    };
+
+    for (uint8_t address : candidateAddresses) {
+        if (!probeI2CAddress(address)) {
+            continue;
+        }
+
+        if (debugOled.begin(SSD1306_SWITCHCAPVCC, address)) {
+            debugOledReady = true;
+            debugOledAddress = address;
+            Serial.printf("Debug OLED initialized at 0x%02X\n", address);
+            writeDebugOledStatus("Boot OK", "5V bring-up", "26V disconnected");
+            return;
+        }
+    }
+
+    Serial.println("Debug OLED detected but failed to initialize as SSD1306");
 }
 
 void configureDirectInputs() {
@@ -100,6 +157,9 @@ void printBringupBanner() {
     Serial.printf("Debug OLED candidates: 0x%02X / 0x%02X\n",
                   CAPTAIN_DEBUG_OLED_I2C_ADDRESS_PRIMARY,
                   CAPTAIN_DEBUG_OLED_I2C_ADDRESS_SECONDARY);
+    if (debugOledReady) {
+        Serial.printf("Debug OLED active at 0x%02X\n", debugOledAddress);
+    }
 }
 
 void updateHeartbeat(uint32_t now) {
@@ -139,6 +199,12 @@ void pollDirectInputs(uint32_t now) {
         Serial.printf("Input %s -> %s\n",
                       CAPTAIN_DIRECT_INPUT_NAMES[index],
                       asserted ? "ACTIVE" : "inactive");
+
+        char oledLine[28];
+        snprintf(oledLine, sizeof(oledLine), "%s -> %s",
+                 CAPTAIN_DIRECT_INPUT_NAMES[index],
+                 asserted ? "ACTIVE" : "inactive");
+        writeDebugOledStatus("Input event", oledLine, "5V bring-up mode");
     }
 }
 
@@ -158,6 +224,8 @@ void runOptionalOutputTest(uint32_t now) {
 
     Serial.printf("Output test -> %s (5 V bench proof-of-life only)\n",
                   CAPTAIN_SOLENOID_NAMES[activeOutput]);
+
+    writeDebugOledStatus("Output test", CAPTAIN_SOLENOID_NAMES[activeOutput], "5V proof-of-life");
 }
 }  // namespace
 
@@ -174,6 +242,7 @@ void setup() {
     Wire.begin(CAPTAIN_I2C_SDA_PIN, CAPTAIN_I2C_SCL_PIN, CAPTAIN_I2C_FREQUENCY_HZ);
     scanI2CBus();
     reportDebugOledStatus();
+    initDebugOled();
     initDisplay();
     displayStartupTest();
     displayGoodMessage(300);

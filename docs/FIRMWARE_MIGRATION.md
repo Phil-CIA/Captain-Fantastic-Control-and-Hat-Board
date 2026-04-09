@@ -21,7 +21,7 @@ A clean control-board firmware baseline has now been added under:
 - merge over only the working pieces from the old control firmware
 - avoid carrying forward old experiment clutter unless it is still needed
 - support the current bench plan: **build the whole board, keep the real 26 V rail out of service, and if needed feed both rails with current-limited 5 V for proof-of-life testing only**
-- use the newly added **256 x 128 I2C OLED** as a local troubleshooting display for boot messages and status once its exact controller is confirmed
+- use the newly added **.96-inch SSD1306-style I2C OLED** as a local troubleshooting display for boot messages and status; the clean bring-up baseline now targets that controller family directly
 
 ## Likely next merge targets
 1. direct input handling

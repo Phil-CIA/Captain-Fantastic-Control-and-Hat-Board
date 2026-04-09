@@ -25,7 +25,7 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 ## Current status
 - New focused repo created on **2026-04-09**
 - The current KiCad files uploaded to GitHub for both boards have been merged into this cleaned repo baseline
-- A **256 x 128 I2C OLED** has also been added as a troubleshooting display for boot messages and local status during bring-up
+- A **.96-inch SSD1306-style I2C OLED** has also been added as a troubleshooting display for boot messages and local status during bring-up
 - The next PCB change will likely **not** be the last one; the goal is to keep building and developing the hardware while collecting more real-world feedback
 - Two redesign blockers are currently tracked:
   1. the **P-channel solenoid-drive section on the base board sees gate-drive conditions above the recommended `Vgs` range when used on the 26 V supply**
