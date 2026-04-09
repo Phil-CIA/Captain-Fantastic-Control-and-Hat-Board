@@ -16,6 +16,15 @@ The next PCB revision may **not** be the final set of board changes. The current
 - the **solenoid-drive issue** needs a safe workaround first, because the present P-channel gate-drive arrangement is pushing `Vgs` above the recommended range
 - any workaround used for development should be clearly marked as temporary and reviewed again before the next fabrication order
 
+## Initial firmware bring-up plan (5 V only)
+For the first build, the goal is **firmware development**, not live solenoid operation.
+
+- assemble the board with the logic and control sections needed for MCU bring-up
+- power the board with **5 V only** for the first bench sessions
+- keep the **26 V solenoid supply disconnected** until the gate-drive / `Vgs` problem is controlled
+- validate regulator behavior, MCU boot, GPIO activity, serial/debug access, and any non-solenoid interface logic first
+- if output verification is needed, use safe low-energy indicators or measurement points instead of real solenoid loads
+
 ## Must-fix items
 
 ### 1) Base board solenoid-drive section

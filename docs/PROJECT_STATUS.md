@@ -20,10 +20,10 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 - The immediate goal is **continued board build-out and development**, so some issues may be handled with short-term workarounds before the full PCB respin is finalized
 
 ## Immediate next priorities
-1. define a safe workaround for the **26 V solenoid-drive problem**, where the P-channel MOSFET driver arrangement is pushing `Vgs` above the recommended range
-2. continue development using the current **HAT-board connector workaround**, while keeping the physical alignment fix on the Rev B PCB list
-3. work through the task breakdown in `docs/REV_B_ACTION_LIST.md`
-4. prepare the redesign plan for the next board revision
+1. assemble the board for **initial firmware bring-up on 5 V only**
+2. keep the **26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
+3. continue development using the current **HAT-board connector workaround**, while keeping the physical alignment fix on the Rev B PCB list
+4. work through the task breakdown in `docs/REV_B_ACTION_LIST.md`
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

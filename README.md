@@ -30,7 +30,7 @@ The HAT board is **not** a revision of the control board. It is a companion boar
   2. the **HAT-board connector did not line up with the base board**, although there is a temporary development workaround
 
 ## Next steps
-1. define a safe temporary workaround for the 26 V solenoid-drive `Vgs` problem
-2. continue development using the current connector workaround while keeping the proper PCB alignment fix in the next revision
-3. follow the tracked redesign checklist in `docs/REV_B_ACTION_LIST.md`
-4. start the next board revision from this corrected baseline
+1. build the board for firmware development and bring it up on **5 V only** first
+2. keep the **26 V solenoid supply disconnected** until the temporary `Vgs` workaround or proper redesign is in place
+3. continue development using the current connector workaround while keeping the proper PCB alignment fix in the next revision
+4. follow the tracked redesign checklist in `docs/REV_B_ACTION_LIST.md`
