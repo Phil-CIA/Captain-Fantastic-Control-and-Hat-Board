@@ -17,6 +17,7 @@ This folder is the clean firmware starting point for the **Captain Fantastic bas
 The new `main.cpp` is intentionally minimal:
 - boots the MCU
 - initializes I2C and the score display
+- scans the I2C bus and reports likely debug OLED presence over serial during boot
 - keeps the solenoid outputs in a safe default state
 - allows optional low-voltage output proof-of-life testing only when intentionally enabled
 

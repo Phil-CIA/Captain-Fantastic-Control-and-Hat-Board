@@ -27,6 +27,7 @@ Use this checklist for the **first firmware-development bring-up** of the base c
 
 ## 4) Firmware bring-up checks
 - confirm USB / serial programming or debug access works
+- watch the boot log for the I2C scan and the likely debug OLED detection report
 - test basic firmware functions such as boot messages, GPIO toggling, and input reads
 - verify any non-solenoid outputs using safe indicators, test points, or a meter / scope instead of real loads
 - keep notes on what works, what is unstable, and what needs rework

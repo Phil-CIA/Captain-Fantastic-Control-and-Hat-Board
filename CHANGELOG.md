@@ -12,6 +12,7 @@ All notable changes to this repo will be documented here.
 - `docs/INITIAL_STUFFING_GUIDE.md` with a practical populate-now vs populate-later recommendation for safe first bring-up
 - `docs/BENCH_STUFFING_CHECKLIST.md` as a short assembly-side checklist for the first 5 V bring-up build
 - `docs/FIRMWARE_MIGRATION.md` plus a clean `firmware/control-board/` baseline to start merging the old control firmware into this repo
+- `docs/OLED_DEBUG_DISPLAY.md` and I2C-scan support in the new firmware baseline for the added 256x128 troubleshooting OLED
 
 ### Changed
 - merged the current uploaded KiCad files for both boards into the organized `hardware/` layout
