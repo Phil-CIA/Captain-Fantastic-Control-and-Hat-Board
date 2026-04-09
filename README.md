@@ -1,28 +1,35 @@
 # Captain Fantastic Control and HAT Board
 
-Focused hardware repo for the **Captain Fantastic Home Edition** control board redesign and the related **HAT board** work.
+Focused hardware repo for the **Captain Fantastic Home Edition** base control board and its companion **HAT board**.
 
 ## Scope
-This repo is intended to hold only the files needed for:
-- the main **control board**
-- the legacy / reference **HAT board**
-- redesign notes, issues, and next-iteration planning
+Originally, the system was built around two main boards:
+- the **matrix board**
+- the **control board**
+
+During development, the control section was split into two physical boards:
+- the **base control board**
+- the **HAT board**
+
+The HAT board is **not** a revision of the control board. It is a companion board that was created when the original control board was split for development work.
 
 > The separate lamp/switch matrix board work lives in the dedicated repo: `Pinball-Sw-Lamp-Matrix-`.
 
 ## Repo layout
-- `hardware/control-board/` – current control board KiCad source for the next redesign pass
+- `hardware/control-board/` – current base control-board KiCad source for the next redesign pass
 - `hardware/control-board/archive/` – older control-board snapshots and backup exports kept for reference
-- `hardware/hat-board/` – current / reference HAT board KiCad source
+- `hardware/hat-board/` – companion HAT-board KiCad source
 - `docs/` – project status, redesign notes, and restart / parking-lot notes
 
 ## Current status
 - New focused repo created on **2026-04-09**
 - The current KiCad files uploaded to GitHub for both boards have been merged into this cleaned repo baseline
-- Immediate next step is to document the **two known redesign blockers** found during first board arrival / inspection
+- Two redesign blockers are now identified:
+  1. the **P-channel solenoid circuit components on the base board cannot handle 26 V**
+  2. the **HAT-board connector did not line up with the base board**
 
 ## Next steps
-1. capture the current hardware problems clearly
-2. clean up repo structure and remove junk / stale exports as needed
-3. decide whether the HAT board is a reference-only design or part of the next active revision
-4. start Rev B / redesign planning from the cleaned baseline
+1. rework the base-board solenoid drive section for the 26 V requirement
+2. fix the board-to-board connector alignment between the base board and the HAT board
+3. clean up any remaining stale exports as needed
+4. start the next board revision from this corrected baseline
