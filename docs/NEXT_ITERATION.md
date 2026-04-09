@@ -18,3 +18,4 @@ This file is the parking lot for the control-board and HAT-board redesign.
 
 ## Notes log
 - 2026-04-09: new focused repo created from the larger Captain Fantastic project so the control-board and HAT-board redesign can proceed cleanly.
+- 2026-04-09: current KiCad files for both the control board and the HAT board were uploaded and folded into the cleaned repo baseline.

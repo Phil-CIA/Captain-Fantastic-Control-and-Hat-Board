@@ -5,14 +5,15 @@ This repo tracks the **Captain Fantastic control board** and the related **HAT b
 
 ## Current state (2026-04-09)
 ### Hardware
-- Baseline KiCad files were copied in from the larger `Captain-Fantastic-home-edition` repo
-- `hardware/control-board/` contains the current control board source
-- `hardware/hat-board/` contains the legacy / reference HAT board source
+- The current KiCad files uploaded to this repo are now the authoritative baseline for both boards
+- `hardware/control-board/` contains the working control-board source for the next redesign pass
+- `hardware/control-board/archive/` keeps older control-board snapshots / backup exports for reference
+- `hardware/hat-board/` contains the current / reference HAT board source
 - The recently received board and parts exposed **at least two issues serious enough to require redesign**
 
 ### Repo state
 - New focused repo has been created to keep this work separate from the matrix board and other machine firmware
-- Cleanup is still needed to decide what should remain in the repo versus what should stay archived elsewhere
+- Root-level upload clutter is being folded into the organized `hardware/` tree so the baseline stays clear
 
 ## Immediate next priorities
 1. document the two known hardware issues clearly
