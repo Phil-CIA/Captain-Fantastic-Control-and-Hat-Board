@@ -14,3 +14,4 @@ All notable changes to this repo will be documented here.
 - archived older control-board snapshot files under `hardware/control-board/archive/`
 - clarified in the docs that the HAT board is a companion board created by splitting the original control board during development, not a revision of it
 - documented the first two must-fix redesign issues: the 26 V solenoid-driver problem and the HAT-board connector misalignment
+- updated the plan to reflect a development-first approach, including the connector workaround and the `Vgs` concern on the solenoid-drive path

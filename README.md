@@ -24,12 +24,13 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 ## Current status
 - New focused repo created on **2026-04-09**
 - The current KiCad files uploaded to GitHub for both boards have been merged into this cleaned repo baseline
-- Two redesign blockers are now identified:
-  1. the **P-channel solenoid circuit components on the base board cannot handle 26 V**
-  2. the **HAT-board connector did not line up with the base board**
+- The next PCB change will likely **not** be the last one; the goal is to keep building and developing the hardware while collecting more real-world feedback
+- Two redesign blockers are currently tracked:
+  1. the **P-channel solenoid-drive section on the base board sees gate-drive conditions above the recommended `Vgs` range when used on the 26 V supply**
+  2. the **HAT-board connector did not line up with the base board**, although there is a temporary development workaround
 
 ## Next steps
-1. rework the base-board solenoid drive section for the 26 V requirement
-2. fix the board-to-board connector alignment between the base board and the HAT board
+1. define a safe temporary workaround for the 26 V solenoid-drive `Vgs` problem
+2. continue development using the current connector workaround while keeping the proper PCB alignment fix in the next revision
 3. follow the tracked redesign checklist in `docs/REV_B_ACTION_LIST.md`
 4. start the next board revision from this corrected baseline

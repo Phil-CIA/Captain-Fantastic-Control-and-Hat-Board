@@ -8,16 +8,30 @@ Build a corrected next revision of the **base control board** and **HAT board** 
 - mates correctly across the **board-to-board connector**
 - preserves the split-board development approach unless a later architectural change is intentionally made
 
+## Development-first approach
+The next PCB revision may **not** be the final set of board changes. The current intent is to keep the hardware usable for active development, apply safe workarounds where needed, and then roll the validated fixes into the next board revision.
+
+### Short-term development posture
+- the **connector misalignment** has a workable temporary path for development, so it remains a tracked PCB fix but is not the only thing blocking current bench work
+- the **solenoid-drive issue** needs a safe workaround first, because the present P-channel gate-drive arrangement is pushing `Vgs` above the recommended range
+- any workaround used for development should be clearly marked as temporary and reviewed again before the next fabrication order
+
 ## Must-fix items
 
 ### 1) Base board solenoid-drive section
 **Problem**
-The current **P-channel solenoid circuit components cannot handle 26 V**. This is the same core issue already identified on the matrix-board work.
+The current **P-channel solenoid-drive arrangement on the base board is pushing the MOSFET drivers above the recommended `Vgs` range when used on the 26 V supply**. This is the same core issue already identified on the matrix-board work.
+
+**Short-term workaround path**
+- treat the on-board 26 V solenoid drive as **unsafe until the `Vgs` condition is controlled**
+- evaluate a temporary gate-to-source clamp / gate-drive limiting approach for development use, or bypass the on-board drive with an external known-good driver stage while bring-up continues
+- document exactly what temporary workaround is used on the bench so it does not get mistaken for the final PCB fix
 
 **Rev B actions**
 - audit every part in the solenoid-drive path for **voltage rating**, **power dissipation**, and **transient margin**
 - replace any under-rated P-channel devices and support parts with components that are appropriate for the real **26 V** operating environment
 - review gate-drive parts, pull resistors, clamp parts, and transient suppression together as one circuit, not as isolated parts
+- explicitly redesign the gate-drive so the P-channel devices stay within an acceptable `Vgs` range under all expected operating conditions
 - confirm that the flyback / suppression strategy is correct for the solenoid load and expected kick energy
 - cross-check the revised approach against the lessons already learned from the matrix-board design
 - clearly mark the solenoid-drive section in the schematic for review before routing
@@ -30,6 +44,10 @@ The current **P-channel solenoid circuit components cannot handle 26 V**. This i
 ### 2) HAT-board connector alignment
 **Problem**
 The **HAT-board connector did not line up** with the base board, preventing correct mating.
+
+**Short-term workaround path**
+- keep using the current physical workaround for development and firmware bring-up
+- document the workaround clearly so the next board revision fixes the actual root cause instead of relying on manual rework or special assembly steps
 
 **Rev B actions**
 - verify the exact mating connector pair, footprint orientation, and pin numbering on both boards

@@ -3,14 +3,15 @@
 This file is the parking lot for the control-board and HAT-board redesign.
 
 ## Current focus
-- redesign the base-board **P-channel solenoid circuit**, because the current components cannot handle **26 V**
-- fix the **HAT-board connector alignment** so it mates correctly with the base board
+- keep the current hardware buildable for development while planning the next PCB revision
+- define a safe workaround for the base-board **P-channel solenoid-drive** issue, where the gate-drive arrangement pushes the MOSFETs above the recommended `Vgs` range on the **26 V** supply
+- continue using the **HAT-board connector workaround** for development, while leaving the proper alignment fix on the next PCB revision list
 - keep only the control-board / HAT-board material needed for this effort
 - identify the authoritative KiCad files for the next revision
 
 ## Known issues to document next
-- Issue 1: the **P-channel solenoid circuit components on the base control board cannot handle the 26 V solenoid supply**; this is the same underlying circuit problem already seen on the matrix board.
-- Issue 2: the **connector for the HAT board did not line up correctly** with the matching connection on the base board.
+- Issue 1: the **P-channel solenoid-drive section on the base control board has a gate-drive / `Vgs` problem on the 26 V solenoid supply**; this is the same underlying concern already seen on the matrix board.
+- Issue 2: the **connector for the HAT board did not line up correctly** with the matching connection on the base board, but there is a usable temporary workaround for development.
 
 ## Parking lot
 - decide whether the next architecture remains split between a **base board** and a **HAT board**, or gets recombined later
