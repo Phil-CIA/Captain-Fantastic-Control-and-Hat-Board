@@ -32,5 +32,5 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 ## Next steps
 1. build the board for firmware development and bring it up on **5 V only** first
 2. use `docs/INITIAL_STUFFING_GUIDE.md` to decide what to populate now versus later
-3. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`
-4. keep the **26 V solenoid supply disconnected** until the temporary `Vgs` workaround or proper redesign is in place
+3. use `docs/BENCH_STUFFING_CHECKLIST.md` as the quick assembly-side checklist
+4. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`

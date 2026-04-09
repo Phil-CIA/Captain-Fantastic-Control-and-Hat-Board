@@ -55,6 +55,7 @@ Recommended precautions:
 5. return to the solenoid section only after the temporary workaround or redesign is defined
 
 ## Related docs
+- `docs/BENCH_STUFFING_CHECKLIST.md`
 - `docs/FIRST_POWERUP_CHECKLIST.md`
 - `docs/REV_B_ACTION_LIST.md`
 - `docs/NEXT_ITERATION.md`

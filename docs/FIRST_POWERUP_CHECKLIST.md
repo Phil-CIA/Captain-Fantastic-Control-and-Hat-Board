@@ -5,7 +5,7 @@ Use this checklist for the **first firmware-development bring-up** of the base c
 > Goal: confirm that the logic side of the hardware is safe and usable before any 26 V solenoid work is attempted.
 
 ## 1) Before power is applied
-- use `docs/INITIAL_STUFFING_GUIDE.md` to confirm the intended first-pass population set
+- use `docs/INITIAL_STUFFING_GUIDE.md` and `docs/BENCH_STUFFING_CHECKLIST.md` to confirm the intended first-pass population set
 - visually inspect the PCB for solder bridges, missing parts, wrong polarity parts, and connector orientation mistakes
 - confirm that the current development workaround for the HAT-board connector is mechanically stable enough for bench use
 - make sure the **26 V solenoid supply is fully disconnected**
