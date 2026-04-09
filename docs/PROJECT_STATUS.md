@@ -21,7 +21,7 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 ## Immediate next priorities
 1. replace or redesign the **P-channel solenoid circuit** on the base board so the components properly handle **26 V**
 2. fix the **HAT-board connector alignment** so the board-to-board connection mates correctly
-3. review the current control board and HAT board files against the physical boards received
+3. work through the task breakdown in `docs/REV_B_ACTION_LIST.md`
 4. prepare the redesign plan for the next board revision
 
 ## Open questions

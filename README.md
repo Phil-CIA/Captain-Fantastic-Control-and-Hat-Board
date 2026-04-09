@@ -31,5 +31,5 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 ## Next steps
 1. rework the base-board solenoid drive section for the 26 V requirement
 2. fix the board-to-board connector alignment between the base board and the HAT board
-3. clean up any remaining stale exports as needed
+3. follow the tracked redesign checklist in `docs/REV_B_ACTION_LIST.md`
 4. start the next board revision from this corrected baseline

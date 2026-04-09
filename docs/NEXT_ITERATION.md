@@ -16,6 +16,7 @@ This file is the parking lot for the control-board and HAT-board redesign.
 - decide whether the next architecture remains split between a **base board** and a **HAT board**, or gets recombined later
 - keep connector / pin-mapping notes near the hardware source of truth
 - capture any assembly or mechanical fit problems as soon as they are observed
+- use `docs/REV_B_ACTION_LIST.md` as the working checklist for the next schematic pass
 
 ## Notes log
 - 2026-04-09: new focused repo created from the larger Captain Fantastic project so the control-board and HAT-board redesign can proceed cleanly.
