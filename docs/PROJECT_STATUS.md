@@ -17,13 +17,14 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 ### Repo state
 - New focused repo has been created to keep this work separate from the matrix board and other machine firmware
 - Root-level upload clutter is being folded into the organized `hardware/` tree so the baseline stays clear
+- A clean firmware baseline is now being migrated into `firmware/control-board/` so this repo can become the active source of truth
 - The immediate goal is **continued board build-out and development**, so some issues may be handled with short-term workarounds before the full PCB respin is finalized
 
 ## Immediate next priorities
 1. use `docs/INITIAL_STUFFING_GUIDE.md` to choose a safe first-pass population set
-2. assemble the board for **initial firmware bring-up on 5 V only**
+2. assemble the board for **initial firmware bring-up with current-limited 5 V**, including both rails at 5 V only if output proof-of-life testing is needed
 3. follow `docs/FIRST_POWERUP_CHECKLIST.md` for the first safe bench power-up
-4. keep the **26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
+4. keep the **real 26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

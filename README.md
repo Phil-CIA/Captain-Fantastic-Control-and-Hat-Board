@@ -19,7 +19,8 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 - `hardware/control-board/` – current base control-board KiCad source for the next redesign pass
 - `hardware/control-board/archive/` – older control-board snapshots and backup exports kept for reference
 - `hardware/hat-board/` – companion HAT-board KiCad source
-- `docs/` – project status, redesign notes, and restart / parking-lot notes
+- `firmware/control-board/` – clean control-board firmware baseline for this repo
+- `docs/` – project status, redesign notes, firmware migration notes, and bring-up checklists
 
 ## Current status
 - New focused repo created on **2026-04-09**
@@ -30,7 +31,7 @@ The HAT board is **not** a revision of the control board. It is a companion boar
   2. the **HAT-board connector did not line up with the base board**, although there is a temporary development workaround
 
 ## Next steps
-1. build the board for firmware development and bring it up on **5 V only** first
-2. use `docs/INITIAL_STUFFING_GUIDE.md` to decide what to populate now versus later
-3. use `docs/BENCH_STUFFING_CHECKLIST.md` as the quick assembly-side checklist
-4. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`
+1. build the board for firmware development and, if needed for proof-of-life output checks, feed **both rails from a current-limited 5 V source** rather than the real 26 V supply
+2. use `docs/INITIAL_STUFFING_GUIDE.md` and `docs/BENCH_STUFFING_CHECKLIST.md` to decide what to populate now versus later
+3. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`
+4. continue the clean firmware migration in `firmware/control-board/` and `docs/FIRMWARE_MIGRATION.md`

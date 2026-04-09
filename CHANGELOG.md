@@ -11,6 +11,7 @@ All notable changes to this repo will be documented here.
 - `docs/FIRST_POWERUP_CHECKLIST.md` for the staged 5 V-only firmware bring-up process
 - `docs/INITIAL_STUFFING_GUIDE.md` with a practical populate-now vs populate-later recommendation for safe first bring-up
 - `docs/BENCH_STUFFING_CHECKLIST.md` as a short assembly-side checklist for the first 5 V bring-up build
+- `docs/FIRMWARE_MIGRATION.md` plus a clean `firmware/control-board/` baseline to start merging the old control firmware into this repo
 
 ### Changed
 - merged the current uploaded KiCad files for both boards into the organized `hardware/` layout

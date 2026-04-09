@@ -8,9 +8,9 @@ Use this checklist for the **first firmware-development bring-up** of the base c
 - use `docs/INITIAL_STUFFING_GUIDE.md` and `docs/BENCH_STUFFING_CHECKLIST.md` to confirm the intended first-pass population set
 - visually inspect the PCB for solder bridges, missing parts, wrong polarity parts, and connector orientation mistakes
 - confirm that the current development workaround for the HAT-board connector is mechanically stable enough for bench use
-- make sure the **26 V solenoid supply is fully disconnected**
+- make sure the **real 26 V solenoid supply is fully disconnected**
 - if practical, unplug or leave unstuffed any parts that are only needed for live solenoid drive testing
-- set the bench supply to **5 V** with a conservative current limit for first power-up
+- set the bench supply to **5 V** with a conservative current limit for first power-up; if output proof-of-life is desired, feed both rails from that same 5 V source only
 
 ## 2) Passive sanity checks
 - check for shorts between **5 V and GND** with a meter before applying power
@@ -20,6 +20,7 @@ Use this checklist for the **first firmware-development bring-up** of the base c
 
 ## 3) First 5 V power-up
 - power the board from the current-limited **5 V** bench supply only
+- if you want to observe the output-stage LEDs or proof-of-life switching, feed the output rail from that same **5 V** source instead of the real 22–26 V rail
 - watch for unexpected current draw, heating, smoke, or parts warming immediately
 - confirm the expected logic rail(s) come up to the proper voltage
 - verify the MCU boots and any status LED / serial console behavior appears as expected

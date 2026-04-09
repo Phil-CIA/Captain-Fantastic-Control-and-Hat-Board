@@ -38,10 +38,11 @@ This especially includes the **solenoid-drive MOSFET chain** identified in the c
 - any other parts that exist only to switch or support the live **26 V** solenoid rail
 
 ## If the board is already fully stuffed
-If those parts are already installed, the board can still be used for early firmware work **provided the 26 V supply remains disconnected** and the solenoid outputs are treated as inactive during bring-up.
+If those parts are already installed, the board can still be used for early firmware work **provided the real 26 V supply remains disconnected** and the solenoid outputs are treated as inactive during bring-up.
 
 Recommended precautions:
-- power the board from a **current-limited 5 V bench supply only**
+- power the logic section from a **current-limited 5 V bench supply**
+- if you want output-stage proof-of-life only, feed the output rail from that same **5 V** source rather than from 22–26 V
 - do not connect real solenoid loads yet
 - do not test live high-energy output switching yet
 - monitor current draw and part temperature during the first boot
