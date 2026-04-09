@@ -31,6 +31,6 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 
 ## Next steps
 1. build the board for firmware development and bring it up on **5 V only** first
-2. keep the **26 V solenoid supply disconnected** until the temporary `Vgs` workaround or proper redesign is in place
-3. continue development using the current connector workaround while keeping the proper PCB alignment fix in the next revision
-4. follow the tracked redesign checklist in `docs/REV_B_ACTION_LIST.md`
+2. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`
+3. keep the **26 V solenoid supply disconnected** until the temporary `Vgs` workaround or proper redesign is in place
+4. continue development using the current connector workaround while keeping the proper PCB alignment fix in the next revision

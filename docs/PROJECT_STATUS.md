@@ -21,9 +21,9 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 
 ## Immediate next priorities
 1. assemble the board for **initial firmware bring-up on 5 V only**
-2. keep the **26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
-3. continue development using the current **HAT-board connector workaround**, while keeping the physical alignment fix on the Rev B PCB list
-4. work through the task breakdown in `docs/REV_B_ACTION_LIST.md`
+2. follow `docs/FIRST_POWERUP_CHECKLIST.md` for the first safe bench power-up
+3. keep the **26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
+4. continue development using the current **HAT-board connector workaround**, while keeping the physical alignment fix on the Rev B PCB list
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

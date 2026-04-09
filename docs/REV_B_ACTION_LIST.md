@@ -24,6 +24,7 @@ For the first build, the goal is **firmware development**, not live solenoid ope
 - keep the **26 V solenoid supply disconnected** until the gate-drive / `Vgs` problem is controlled
 - validate regulator behavior, MCU boot, GPIO activity, serial/debug access, and any non-solenoid interface logic first
 - if output verification is needed, use safe low-energy indicators or measurement points instead of real solenoid loads
+- use `docs/FIRST_POWERUP_CHECKLIST.md` as the step-by-step bring-up procedure
 
 ## Must-fix items
 
