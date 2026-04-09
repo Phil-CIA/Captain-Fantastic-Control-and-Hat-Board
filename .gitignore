@@ -1,0 +1,15 @@
+# PlatformIO
+.pio/
+.vscode/
+
+# KiCad local / temp files
+*-bak
+*.kicad_prl
+*.lck
+*.tmp
+*.cache
+fp-info-cache
+
+# OS files
+Thumbs.db
+.DS_Store
