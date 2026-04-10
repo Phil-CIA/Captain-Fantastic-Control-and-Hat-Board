@@ -35,4 +35,4 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 1. build the board for firmware development and, if needed for proof-of-life output checks, feed **both rails from a current-limited 5 V source** rather than the real 26 V supply
 2. use `docs/INITIAL_STUFFING_GUIDE.md` and `docs/BENCH_STUFFING_CHECKLIST.md` to decide what to populate now versus later
 3. follow the safe bring-up procedure in `docs/FIRST_POWERUP_CHECKLIST.md`
-4. finalize the high-side respin direction using `docs/SOLENOID_DRIVER_SELECTION.md` while continuing the clean firmware migration in `firmware/control-board/`
+4. proceed with the **single-channel smart high-side** respin direction using `docs/SOLENOID_DRIVER_SELECTION.md` and `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md` while continuing the clean firmware migration in `firmware/control-board/`

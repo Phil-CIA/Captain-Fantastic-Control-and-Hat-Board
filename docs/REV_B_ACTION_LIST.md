@@ -40,6 +40,7 @@ The current **P-channel solenoid-drive arrangement on the base board is pushing 
 **Rev B actions**
 - audit every part in the solenoid-drive path for **voltage rating**, **power dissipation**, and **transient margin**
 - replace the current discrete PMOS driver approach with a **protected smart high-side switch architecture** for the next revision
+- implement the control-board respin around a **single-channel per output** layout strategy for easier routing and debugging
 - review gate-drive parts, pull resistors, clamp parts, and transient suppression together as one circuit, not as isolated parts
 - explicitly eliminate the current P-channel `Vgs` overstress condition from the design
 - confirm that the flyback / suppression strategy is correct for the solenoid load and expected kick energy

@@ -24,7 +24,7 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 1. use `docs/INITIAL_STUFFING_GUIDE.md` to choose a safe first-pass population set
 2. assemble the board for **initial firmware bring-up with current-limited 5 V**, including both rails at 5 V only if output proof-of-life testing is needed
 3. follow `docs/FIRST_POWERUP_CHECKLIST.md` for the first safe bench power-up
-4. use `docs/SOLENOID_DRIVER_SELECTION.md` to drive the base-board high-side respin decision instead of keeping the current discrete PMOS stage
+4. proceed with the base-board high-side respin using the **single-channel smart-switch layout direction** captured in `docs/SOLENOID_DRIVER_SELECTION.md` and `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md`
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

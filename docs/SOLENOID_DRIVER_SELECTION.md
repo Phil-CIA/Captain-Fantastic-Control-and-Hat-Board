@@ -94,14 +94,15 @@ For the next base control-board revision:
 
 1. **do not reuse the present discrete PMOS high-side stage**
 2. move to a **smart high-side switch architecture**
-3. prefer the **same solution class** already proven on the matrix board unless coil-current needs force a different part
+3. proceed with a **single-channel device layout strategy** for the five solenoid outputs so routing and placement stay simple on this board
 
 ## Practical board-level direction
 There are currently five named solenoid outputs in the firmware mapping (`S2` through `S6`).
 
-That means practical implementation options include:
-- **two quad smart high-side devices** for BOM/layout consistency and channel margin, or
-- **one quad + one single-channel smart high-side device** if board space and BOM are more important than single-family reuse
+The chosen board-level direction is now:
+- **five single-channel smart high-side outputs**
+- repeated per-channel layout instead of centering the design around one larger multi-channel package
+- see `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md` for the placement / routing intent
 
 ## Remaining confirmation step
 Before the final part number is frozen, confirm the worst-case coil demand for the target pinball coil:
