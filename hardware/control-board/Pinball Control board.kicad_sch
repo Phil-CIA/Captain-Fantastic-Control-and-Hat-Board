@@ -7879,6 +7879,68 @@
 		)
 		(uuid "f8a6d424-eeed-487a-b84e-78be8ae149c9")
 	)
+	(rectangle
+		(start 208.28 205.74)
+		(end 313.69 231.14)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid 4e166078-8a68-44f8-8a6f-7c0f2e3b6fb2)
+	)
+	(text "REV B SOLENOID NOTE"
+		(exclude_from_sim no)
+		(at 210.312 208.026 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "0c0f8a9a-3015-482b-9a6d-3601d6e9c5a2")
+	)
+	(text "Replace Q10/Q11/Q18 discrete block"
+		(exclude_from_sim no)
+		(at 210.312 212.09 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "d6688792-6c98-4c81-bd08-9f3fc7fa4a1e")
+	)
+	(text "with 5x single-channel smart high-side"
+		(exclude_from_sim no)
+		(at 210.312 216.154 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "75e4f6b9-c6de-4c6a-a114-11b5e2873ec8")
+	)
+	(text "drivers (one each for S2..S6)"
+		(exclude_from_sim no)
+		(at 210.312 220.218 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "6f2ce87d-b68f-4e5c-89e7-728f858d31ac")
+	)
+	(text "Use local decoupling + short output paths"
+		(exclude_from_sim no)
+		(at 210.312 224.282 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "8b18108a-1d1c-4e0f-b998-ef3659804d13")
+	)
 	(junction
 		(at 288.29 182.88)
 		(diameter 0)
