@@ -1,0 +1,10 @@
+(fp_lib_table
+  (version 7)
+  (lib
+    (name "Snapmagic_TI_TPS1H200A_Q1")
+    (type "KiCad")
+    (uri "${KIPRJMOD}/kicad-lib/footprints/Snapmagic_TI_TPS1H200A_Q1.pretty")
+    (options "")
+    (descr "Project-local SnapMagic footprints for TPS1H200A-Q1")
+  )
+)
