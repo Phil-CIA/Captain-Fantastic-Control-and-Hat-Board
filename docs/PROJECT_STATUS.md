@@ -24,7 +24,7 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 1. use `docs/INITIAL_STUFFING_GUIDE.md` to choose a safe first-pass population set
 2. assemble the board for **initial firmware bring-up with current-limited 5 V**, including both rails at 5 V only if output proof-of-life testing is needed
 3. follow `docs/FIRST_POWERUP_CHECKLIST.md` for the first safe bench power-up
-4. keep the **real 26 V solenoid supply disconnected** until a safe workaround for the P-channel MOSFET `Vgs` problem is in place
+4. use `docs/SOLENOID_DRIVER_SELECTION.md` to drive the base-board high-side respin decision instead of keeping the current discrete PMOS stage
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

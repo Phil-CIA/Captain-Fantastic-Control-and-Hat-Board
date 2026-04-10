@@ -13,6 +13,7 @@ All notable changes to this repo will be documented here.
 - `docs/BENCH_STUFFING_CHECKLIST.md` as a short assembly-side checklist for the first 5 V bring-up build
 - `docs/FIRMWARE_MIGRATION.md` plus a clean `firmware/control-board/` baseline to start merging the old control firmware into this repo
 - `docs/OLED_DEBUG_DISPLAY.md` and SSD1306-oriented boot-time I2C/OLED support in the new firmware baseline for the added .96-inch troubleshooting display
+- `docs/SOLENOID_DRIVER_SELECTION.md` documenting the current driver-direction decision: move away from the discrete PMOS stage and toward a smart high-side switch for the respin
 
 ### Changed
 - merged the current uploaded KiCad files for both boards into the organized `hardware/` layout

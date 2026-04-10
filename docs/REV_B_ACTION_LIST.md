@@ -39,12 +39,12 @@ The current **P-channel solenoid-drive arrangement on the base board is pushing 
 
 **Rev B actions**
 - audit every part in the solenoid-drive path for **voltage rating**, **power dissipation**, and **transient margin**
-- replace any under-rated P-channel devices and support parts with components that are appropriate for the real **26 V** operating environment
+- replace the current discrete PMOS driver approach with a **protected smart high-side switch architecture** for the next revision
 - review gate-drive parts, pull resistors, clamp parts, and transient suppression together as one circuit, not as isolated parts
-- explicitly redesign the gate-drive so the P-channel devices stay within an acceptable `Vgs` range under all expected operating conditions
+- explicitly eliminate the current P-channel `Vgs` overstress condition from the design
 - confirm that the flyback / suppression strategy is correct for the solenoid load and expected kick energy
 - cross-check the revised approach against the lessons already learned from the matrix-board design
-- clearly mark the solenoid-drive section in the schematic for review before routing
+- use `docs/SOLENOID_DRIVER_SELECTION.md` as the design-direction note before freezing the respin
 
 **Verification before ordering**
 - every part in the solenoid path has an acceptable voltage margin above the real supply and transient conditions
