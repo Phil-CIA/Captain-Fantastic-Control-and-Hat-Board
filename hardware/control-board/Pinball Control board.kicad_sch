@@ -7931,7 +7931,7 @@
 		)
 		(uuid "6f2ce87d-b68f-4e5c-89e7-728f858d31ac")
 	)
-	(text "Use local decoupling + short output paths"
+	(text "Bring FAULT out; strap CL/DELAY per datasheet"
 		(exclude_from_sim no)
 		(at 210.312 224.282 0)
 		(effects
@@ -7940,6 +7940,66 @@
 			)
 		)
 		(uuid "8b18108a-1d1c-4e0f-b998-ef3659804d13")
+	)
+	(text "PLACEHOLDER MAP: U_S2..U_S6, one per channel"
+		(exclude_from_sim no)
+		(at 210.312 228.346 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "b95f1c61-9478-4d6b-82e3-8f9ddf63a311")
+	)
+	(text "CTRL: SD2->U_S2_IN, SD3->U_S3_IN, SD4->U_S4_IN"
+		(exclude_from_sim no)
+		(at 210.312 232.41 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "fa3873d9-bc52-4857-bcf9-f5715de2d4f2")
+	)
+	(text "CTRL: SD5->U_S5_IN, SD6->U_S6_IN"
+		(exclude_from_sim no)
+		(at 210.312 236.474 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "8ba071e5-9395-430f-bf6b-f40f4d22f85f")
+	)
+	(text "OUT: U_S2_OUT->S2, U_S3_OUT->S3, U_S4_OUT->S4"
+		(exclude_from_sim no)
+		(at 210.312 240.538 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "41de6f57-9db7-4a57-9efd-909a5cb52ff7")
+	)
+	(text "OUT: U_S5_OUT->S5, U_S6_OUT->S6; VIN=+22vdc"
+		(exclude_from_sim no)
+		(at 210.312 244.602 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "bd74d85b-9a89-40dc-8ce4-cee24d544052")
+	)
+	(text "Each channel: local decoupling + FAULT testpoint"
+		(exclude_from_sim no)
+		(at 210.312 248.666 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+		)
+		(uuid "90cdfcbc-35de-4f9b-8cd6-0404431bfd07")
 	)
 	(junction
 		(at 288.29 182.88)

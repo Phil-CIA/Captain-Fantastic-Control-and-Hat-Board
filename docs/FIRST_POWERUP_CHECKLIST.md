@@ -43,3 +43,4 @@ Stop immediately if any of the following occur:
 - record the measured rail voltages and current draw
 - capture firmware bring-up status in `docs/NEXT_ITERATION.md`
 - leave the 26 V solenoid path disabled until the gate-drive / `Vgs` issue has a defined safe workaround or redesign
+- when starting TPS1H200 channel validation, log CL and DELAY experiments in `docs/TPS1H200_CL_DELAY_BENCH_TABLE.md`

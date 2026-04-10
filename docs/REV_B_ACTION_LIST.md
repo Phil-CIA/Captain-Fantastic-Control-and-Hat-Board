@@ -47,6 +47,7 @@ The current **P-channel solenoid-drive arrangement on the base board is pushing 
 - cross-check the revised approach against the lessons already learned from the matrix-board design
 - use `docs/SOLENOID_DRIVER_SELECTION.md` as the design-direction note before freezing the respin
 - implement the repeated output cell from `docs/SMART_SWITCH_CHANNEL_BLOCK.md` for the five smart-switch solenoid channels
+- tune and log per-channel CL and DELAY behavior using `docs/TPS1H200_CL_DELAY_BENCH_TABLE.md`
 
 **Verification before ordering**
 - every part in the solenoid path has an acceptable voltage margin above the real supply and transient conditions

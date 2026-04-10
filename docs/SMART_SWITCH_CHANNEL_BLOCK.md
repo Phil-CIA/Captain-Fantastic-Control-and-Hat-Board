@@ -82,3 +82,12 @@ That means the new schematic should preserve those control names where practical
 
 ## Current note
 The smart-switch part is now being baselined as **`TPS1H200A-Q1`** for the repeated output channels, and this block definition is the intended schematic pattern for the control-board respin.
+
+## Initial implementation defaults
+For the first Rev B pass:
+- keep one `TPS1H200A-Q1` per output channel (`S2`..`S6`)
+- route the device output to `SOL_OUT_Sx`
+- route `SOL_EN_Sx` from the ESP32 to the logic input
+- bring the fault / diagnostic signal to a test pad and optional MCU input
+- keep the current-limit and `DELAY` configuration easy to tune during bench validation
+- see `docs/TPS1H200_IMPLEMENTATION_NOTES.md` for the concrete starting hookup and bring-up notes

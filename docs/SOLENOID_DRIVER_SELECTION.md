@@ -105,6 +105,9 @@ The chosen board-level direction is now:
 - repeated per-channel layout instead of centering the design around one larger multi-channel package
 - see `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md` for the placement / routing intent
 
+## Implementation note
+A concrete starting-point hookup plan for the repeated channel block is now captured in `docs/TPS1H200_IMPLEMENTATION_NOTES.md` so the KiCad update can move from “direction” to “specific repeated block.”
+
 ## Remaining confirmation step
 Before the final part number is frozen, confirm the worst-case coil demand for the target pinball coil:
 - DC resistance
