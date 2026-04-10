@@ -47,6 +47,6 @@ Use `docs/SMART_SWITCH_CHANNEL_BLOCK.md` as the repeated per-channel schematic p
 - avoid recreating the old discrete PMOS gate-drive cluster in the new layout
 
 ## Design note
-The exact smart-switch part can still be finalized, but the **layout strategy is now locked to single-channel devices** because it is the easier and cleaner fit for this board.
+The layout strategy is now locked to **single-channel `TPS1H200A-Q1`-based devices** because that is the easier and cleaner fit for this board.
 
 A visible Rev B note has also been added directly into `hardware/control-board/Pinball Control board.kicad_sch` near the existing solenoid section so the KiCad source itself carries the direction during schematic/layout work.

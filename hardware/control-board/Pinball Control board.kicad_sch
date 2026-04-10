@@ -7911,7 +7911,7 @@
 		)
 		(uuid "d6688792-6c98-4c81-bd08-9f3fc7fa4a1e")
 	)
-	(text "with 5x single-channel smart high-side"
+	(text "with 5x TPS1H200A-Q1 smart high-side"
 		(exclude_from_sim no)
 		(at 210.312 216.154 0)
 		(effects

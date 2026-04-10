@@ -95,6 +95,7 @@ For the next base control-board revision:
 1. **do not reuse the present discrete PMOS high-side stage**
 2. move to a **smart high-side switch architecture**
 3. proceed with a **single-channel device layout strategy** for the five solenoid outputs so routing and placement stay simple on this board
+4. use **`TPS1H200A-Q1` as the selected baseline device** for the repeated output channels unless later bench data proves a mismatch
 
 ## Practical board-level direction
 There are currently five named solenoid outputs in the firmware mapping (`S2` through `S6`).
@@ -113,6 +114,7 @@ Before the final part number is frozen, confirm the worst-case coil demand for t
 ## Preliminary conclusion
 The decision is now narrowed substantially:
 - **architecture:** smart high-side switch
+- **chosen baseline part:** `TPS1H200A-Q1`
 - **not recommended:** current discrete PMOS stage
 - **not preferred:** TIP125 Darlington return
-- **preferred next action:** pick the final smart-switch part after confirming the actual coil current envelope
+- **preferred next action:** implement the repeated `TPS1H200A-Q1` channel block in the next schematic pass and confirm the coil envelope during bench validation

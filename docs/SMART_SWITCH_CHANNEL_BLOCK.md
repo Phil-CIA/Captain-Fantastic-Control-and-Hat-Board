@@ -81,4 +81,4 @@ The current bring-up firmware names are already:
 That means the new schematic should preserve those control names where practical to reduce firmware churn.
 
 ## Current note
-The exact smart-switch part number can still be finalized, but this block definition is now the intended repeated schematic pattern for the control-board respin.
+The smart-switch part is now being baselined as **`TPS1H200A-Q1`** for the repeated output channels, and this block definition is the intended schematic pattern for the control-board respin.
