@@ -37,6 +37,8 @@ Each output block should contain:
 - logic input from the MCU / control logic
 - optional fault or current-sense return if the chosen part supports it and routing allows it
 
+Use `docs/SMART_SWITCH_CHANNEL_BLOCK.md` as the repeated per-channel schematic pattern for `S2..S6`.
+
 ## Placement guidance
 - keep the high-current path short and direct from rail -> device -> output connector
 - keep each channel's local decoupling close to the switch supply pins

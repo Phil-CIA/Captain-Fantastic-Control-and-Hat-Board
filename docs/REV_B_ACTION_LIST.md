@@ -46,6 +46,7 @@ The current **P-channel solenoid-drive arrangement on the base board is pushing 
 - confirm that the flyback / suppression strategy is correct for the solenoid load and expected kick energy
 - cross-check the revised approach against the lessons already learned from the matrix-board design
 - use `docs/SOLENOID_DRIVER_SELECTION.md` as the design-direction note before freezing the respin
+- implement the repeated output cell from `docs/SMART_SWITCH_CHANNEL_BLOCK.md` for the five smart-switch solenoid channels
 
 **Verification before ordering**
 - every part in the solenoid path has an acceptable voltage margin above the real supply and transient conditions

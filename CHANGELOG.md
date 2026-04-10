@@ -15,6 +15,7 @@ All notable changes to this repo will be documented here.
 - `docs/OLED_DEBUG_DISPLAY.md` and SSD1306-oriented boot-time I2C/OLED support in the new firmware baseline for the added .96-inch troubleshooting display
 - `docs/SOLENOID_DRIVER_SELECTION.md` documenting the current driver-direction decision: move away from the discrete PMOS stage and toward a smart high-side switch for the respin
 - `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md` locking in the easier single-channel layout approach for the five control-board solenoid outputs
+- `docs/SMART_SWITCH_CHANNEL_BLOCK.md` defining the repeated per-channel smart-switch schematic block for `S2..S6`
 - added a visible Rev B smart-switch/layout note directly into `hardware/control-board/Pinball Control board.kicad_sch`
 
 ### Changed
