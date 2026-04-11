@@ -30,7 +30,7 @@
 					(justify left bottom)
 				)
 			)
-			(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+			(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 				(at 0 0 0)
 				(effects
 					(font
@@ -13455,7 +13455,7 @@
 				)
 			)
 		)
-		(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+		(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 			(at 256.54 88.9 0)
 			(effects
 				(font
@@ -14188,7 +14188,7 @@
 				)
 			)
 		)
-		(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+		(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 			(at 257.81 241.3 0)
 			(effects
 				(font
@@ -20793,7 +20793,7 @@
 				)
 			)
 		)
-		(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+		(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 			(at 256.54 190.5 0)
 			(effects
 				(font
@@ -23106,7 +23106,7 @@
 				)
 			)
 		)
-		(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+		(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 			(at 256.54 139.7 0)
 			(effects
 				(font
@@ -24648,7 +24648,7 @@
 				)
 			)
 		)
-		(property "Footprint" "1My_Parts_ ICs:SOP65P490X110-9N --TSP1H200"
+		(property "Footprint" "Snapmagic_TI_TPS1H200A_Q1:SOP65P490X110-9N"
 			(at 256.54 39.37 0)
 			(effects
 				(font
