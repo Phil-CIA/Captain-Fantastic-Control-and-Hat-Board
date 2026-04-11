@@ -18,19 +18,21 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 - New focused repo has been created to keep this work separate from the matrix board and other machine firmware
 - Root-level upload clutter has been folded into the organized `hardware/` tree so the baseline stays clear
 - The repo now contains project-local KiCad symbol / footprint / 3D-model support for `TPS1H200A-Q1`
-- The repeated smart-switch channels have now been duplicated into the control-board schematic and saved to GitHub
+- The repeated smart-switch channels are now in the control-board schematic
+- A routed control-board PCB checkpoint now exists in `hardware/control-board/Pinball Control board.kicad_pcb`
+- The main `TPS1H200A-Q1` footprint-library mismatch has now been corrected in both the schematic and PCB files
 
 ## Immediate next priorities
-1. use `docs/NEXT_STEP_BENCH_PLAN.md` and `docs/FIRST_POWERUP_CHECKLIST.md` for the next safe bench step
-2. do the unpowered meter checks and the first **current-limited 5 V only** power-up
-3. validate **one `TPS1H200A-Q1` channel at a time** before using the real coil rail
-4. use `docs/TPS1H200_CL_DELAY_BENCH_TABLE.md` to log `CL` and `DELAY` behavior while tuning the first accepted default population
-5. carry the repeated smart-switch pattern into final schematic / PCB cleanup once bench behavior is confirmed
+1. use `docs/PCB_ROUTE_AND_ORDER_CHECKLIST.md` as the final review guide for the routed board
+2. run the final KiCad **DRC** and do the last connector / mechanical sanity check
+3. generate the manufacturing output set: **Gerbers** and **drill files**
+4. if assembly support is needed, export the **BOM** and **pick-and-place** files too
+5. order the revised board, then return to the bench bring-up plan when the hardware arrives
 
 ## Implementation checkpoint
-- The project now has a concrete implementation note, a CL/DELAY bench-tuning table, a schematic conversion worksheet, and a simple next-step bench plan.
+- The project now has a concrete implementation note, a CL/DELAY bench-tuning table, a schematic conversion worksheet, a simple next-step bench plan, and a routed-board order checklist.
 - The repo-local KiCad libraries for `TPS1H200A-Q1` are now present under `hardware/control-board/kicad-lib/`.
-- The repeated `TPS1H200A-Q1` channels for the solenoid outputs are now in the control-board schematic and the repo is saved cleanly.
+- The repeated `TPS1H200A-Q1` channels for the solenoid outputs are now in both the schematic and the routed PCB checkpoint.
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

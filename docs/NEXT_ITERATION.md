@@ -25,3 +25,5 @@ This file is the parking lot for the control-board and HAT-board redesign.
 - 2026-04-09: current KiCad files for both the control board and the HAT board were uploaded and folded into the cleaned repo baseline.
 - 2026-04-09: clarified that the HAT board is a companion board created by splitting the original control board during development, and documented the first two must-fix redesign issues.
 - 2026-04-09: current development plan is to build the board for firmware work and power it with **5 V only** at first, with the 26 V solenoid path left disconnected.
+- 2026-04-11: the revised control-board PCB was routed and the main `TPS1H200A-Q1` footprint-library mismatch was relinked to the repo-local footprint library.
+- 2026-04-11: next step is final DRC / manufacturing-output generation and then ordering the revised board.
