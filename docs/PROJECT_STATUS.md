@@ -3,7 +3,7 @@
 ## Summary
 This repo tracks the **Captain Fantastic base control board** and its companion **HAT board** as a focused hardware project.
 
-## Current state (2026-04-10)
+## Current state (2026-04-11)
 ### Hardware
 - The current KiCad files uploaded to this repo are now the authoritative baseline for both boards
 - The machine originally had two main boards: the matrix board and the control board
@@ -12,25 +12,25 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 - `hardware/control-board/` contains the working base-board source for the next redesign pass
 - `hardware/control-board/archive/` keeps older control-board snapshots / backup exports for reference
 - `hardware/hat-board/` contains the companion HAT-board source
-- The recently received board and parts exposed **two issues serious enough to require redesign**
+- The solenoid-driver redesign direction is now centered on the **single-channel `TPS1H200A-Q1` smart high-side switch**
 
 ### Repo state
 - New focused repo has been created to keep this work separate from the matrix board and other machine firmware
-- Root-level upload clutter is being folded into the organized `hardware/` tree so the baseline stays clear
-- A clean firmware baseline is now being migrated into `firmware/control-board/` so this repo can become the active source of truth
-- The immediate goal is **continued board build-out and development**, so some issues may be handled with short-term workarounds before the full PCB respin is finalized
+- Root-level upload clutter has been folded into the organized `hardware/` tree so the baseline stays clear
+- The repo now contains project-local KiCad symbol / footprint / 3D-model support for `TPS1H200A-Q1`
+- The repeated smart-switch channels have now been duplicated into the control-board schematic and saved to GitHub
 
 ## Immediate next priorities
-1. use `docs/INITIAL_STUFFING_GUIDE.md` to choose a safe first-pass population set
-2. assemble the board for **initial firmware bring-up with current-limited 5 V**, including both rails at 5 V only if output proof-of-life testing is needed
-3. follow `docs/FIRST_POWERUP_CHECKLIST.md` for the first safe bench power-up
-4. proceed with the base-board high-side respin using the **single-channel `TPS1H200A-Q1` smart-switch direction** captured in `docs/SOLENOID_DRIVER_SELECTION.md`, `docs/SINGLE_CHANNEL_SOLENOID_LAYOUT.md`, and `docs/SMART_SWITCH_CHANNEL_BLOCK.md`
-5. use `docs/TPS1H200_IMPLEMENTATION_NOTES.md`, `docs/TPS1H200_CL_DELAY_BENCH_TABLE.md`, and `docs/TPS1H200_SCHEMATIC_CONVERSION_WORKSHEET.md` as the implementation set while replacing the old discrete path
+1. use `docs/NEXT_STEP_BENCH_PLAN.md` and `docs/FIRST_POWERUP_CHECKLIST.md` for the next safe bench step
+2. do the unpowered meter checks and the first **current-limited 5 V only** power-up
+3. validate **one `TPS1H200A-Q1` channel at a time** before using the real coil rail
+4. use `docs/TPS1H200_CL_DELAY_BENCH_TABLE.md` to log `CL` and `DELAY` behavior while tuning the first accepted default population
+5. carry the repeated smart-switch pattern into final schematic / PCB cleanup once bench behavior is confirmed
 
 ## Implementation checkpoint
-- The project now has a concrete implementation note, a CL/DELAY bench-tuning table, and a schematic conversion worksheet.
-- The KiCad schematic includes an expanded Rev B placeholder mapping note for channels `S2`..`S6`.
-- Full symbol insertion for `TPS1H200A-Q1` is best completed in an interactive KiCad session because there is no dedicated in-repo symbol library file yet.
+- The project now has a concrete implementation note, a CL/DELAY bench-tuning table, a schematic conversion worksheet, and a simple next-step bench plan.
+- The repo-local KiCad libraries for `TPS1H200A-Q1` are now present under `hardware/control-board/kicad-lib/`.
+- The repeated `TPS1H200A-Q1` channels for the solenoid outputs are now in the control-board schematic and the repo is saved cleanly.
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?
