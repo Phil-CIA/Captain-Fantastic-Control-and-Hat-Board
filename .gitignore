@@ -9,6 +9,8 @@
 *.tmp
 *.cache
 fp-info-cache
+\#auto_saved_files#
+*-backups/
 
 # OS files
 Thumbs.db
