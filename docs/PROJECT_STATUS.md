@@ -3,7 +3,7 @@
 ## Summary
 This repo tracks the **Captain Fantastic base control board** and its companion **HAT board** as a focused hardware project.
 
-## Current state (2026-04-11)
+## Current state (2026-04-12)
 ### Hardware
 - The current KiCad files uploaded to this repo are now the authoritative baseline for both boards
 - The machine originally had two main boards: the matrix board and the control board
@@ -23,16 +23,17 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 - The main `TPS1H200A-Q1` footprint-library mismatch has now been corrected in both the schematic and PCB files
 
 ## Immediate next priorities
-1. use `docs/PCB_ROUTE_AND_ORDER_CHECKLIST.md` as the final review guide for the routed board
-2. run the final KiCad **DRC** and do the last connector / mechanical sanity check
-3. generate the manufacturing output set: **Gerbers** and **drill files**
-4. if assembly support is needed, export the **BOM** and **pick-and-place** files too
-5. order the revised board, then return to the bench bring-up plan when the hardware arrives
+1. wait for delivery of the ordered Rev 1 PCB and BOM parts
+2. use `docs/REV1_POWERUP_ON_ARRIVAL.md` as the arrival-session checklist
+3. inspect received boards/parts and complete unpowered continuity checks first
+4. perform first **current-limited 5 V only** bring-up before any real coil rail use
+5. validate one smart-switch channel at a time and log CL/DELAY behavior
 
 ## Implementation checkpoint
 - The project now has a concrete implementation note, a CL/DELAY bench-tuning table, a schematic conversion worksheet, a simple next-step bench plan, and a routed-board order checklist.
 - The repo-local KiCad libraries for `TPS1H200A-Q1` are now present under `hardware/control-board/kicad-lib/`.
 - The repeated `TPS1H200A-Q1` channels for the solenoid outputs are now in both the schematic and the routed PCB checkpoint.
+- Rev 1 PCB and BOM orders are now placed; the project has moved into the delivery-and-bring-up stage.
 
 ## Open questions
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?

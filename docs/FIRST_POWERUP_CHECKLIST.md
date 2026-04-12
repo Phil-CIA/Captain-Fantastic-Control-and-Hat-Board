@@ -5,6 +5,8 @@ Use this checklist for the **first firmware-development bring-up** of the base c
 > Goal: confirm that the logic side of the hardware is safe and usable before any 26 V solenoid work is attempted.
 >
 > If you want the stripped-down version, use `docs/NEXT_STEP_BENCH_PLAN.md` for the one-step-at-a-time bench plan.
+>
+> For the newly ordered Rev 1 hardware arrival workflow, use `docs/REV1_POWERUP_ON_ARRIVAL.md`.
 
 ## 1) Before power is applied
 - use `docs/INITIAL_STUFFING_GUIDE.md` and `docs/BENCH_STUFFING_CHECKLIST.md` to confirm the intended first-pass population set
