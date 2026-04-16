@@ -427,6 +427,102 @@ With the starting defaults above, code can proceed in this sequence:
 
 ---
 
+## VIII. ROUND 2 CLARIFICATION QUESTIONS (Post-Decision Details)
+
+These are the next implementation-locking questions after Decisions 1-4.
+
+### Q1: Ball Count and End-of-Game Rules
+
+**Question:** How many balls per game and how do extra balls consume?
+
+**Choices:**
+- Balls per game: [ ] 3  [ ] 5
+- Extra ball consumes and still decrements ball counter: [ ] Yes  [ ] No
+- Max extra balls that can be queued: [ ] 1  [ ] 2  [ ] Unlimited
+
+### Q2: Tilt Penalty Policy
+
+**Question:** What exactly happens on TILT during BALL_IN_PLAY?
+
+**Choices:**
+- Forfeit current bonus countdown: [ ] Yes  [ ] No
+- Immediately mute all music/effects: [ ] Yes  [ ] No
+- Disable all solenoids except safe-drain path: [ ] Yes  [ ] No
+
+### Q3: Bonus Countdown Timing and Audio
+
+**Question:** Confirm bonus payout pacing and sound cadence.
+
+**Choices:**
+- Bonus step interval: [ ] 50ms  [ ] 75ms  [ ] 100ms
+- Sound pulse on every bonus step: [ ] Yes  [ ] No
+- Accelerate countdown when remaining bonus <= 5: [ ] Yes  [ ] No
+
+### Q4: Switch Input Policy
+
+**Question:** What debounce/acceptance rules should runtime use?
+
+**Choices:**
+- Debounce window: [ ] 20ms  [ ] 30ms  [ ] 50ms
+- Simultaneous hits in same scan frame score all: [ ] Yes  [ ] No
+- Re-trigger lockout per switch after hit: [ ] 0ms  [ ] 50ms  [ ] 100ms
+
+### Q5: Solenoid Safety Constraints
+
+**Question:** Final safety limits for coil driving?
+
+**Choices:**
+- Max single pulse width: [ ] 30ms  [ ] 40ms  [ ] 50ms
+- Minimum cooldown per coil between fires: [ ] 50ms  [ ] 100ms  [ ] 150ms
+- Global max concurrent coils: [ ] 1  [ ] 2
+
+### Q6: Attract-to-Game Audio Transition
+
+**Question:** How should attract music behave when START is pressed?
+
+**Choices:**
+- Stop attract immediately, then play start fanfare: [ ] Yes  [ ] No
+- Fade attract over N ms before start fanfare: [ ] 0  [ ] 250  [ ] 500
+- Resume attract only when returning to ATTRACT state: [ ] Yes  [ ] No
+
+### Q7: Missing Audio File Behavior
+
+**Question:** What is fallback behavior when a requested track is missing?
+
+**Choices:**
+- Fallback to startup tone family for that event: [ ] Yes  [ ] No
+- Log warning on serial/OLED each miss: [ ] Yes  [ ] No
+- Suppress repeat warnings after first miss per track: [ ] Yes  [ ] No
+
+### Q8: Diagnostic Mode Entry/Exit Contract
+
+**Question:** How do we enter and leave diagnostics on production hardware?
+
+**Choices:**
+- Entry method: [ ] Dedicated test button hold  [ ] Serial command  [ ] Both
+- Hold duration to enter (button): [ ] 1s  [ ] 2s  [ ] 3s
+- Exit method: [ ] Button release  [ ] Timeout  [ ] Explicit command
+
+### Q9: Score Persistence and Reset Rules
+
+**Question:** What values persist across reboot/power cycle?
+
+**Choices:**
+- Persist high score in NVS/flash: [ ] Yes  [ ] No
+- Persist operator settings (volume, diagnostics prefs): [ ] Yes  [ ] No
+- Factory reset command clears persisted values: [ ] Yes  [ ] No
+
+### Q10: MVP Scope Lock for First Implementation Pass
+
+**Question:** Which feature set defines v0.1 done?
+
+**Choices:**
+- [ ] State machine + scoring + no MP3 (tone-only)
+- [ ] State machine + scoring + event MP3 (no streaming)
+- [ ] State machine + scoring + event MP3 + full diagnostics
+
+---
+
 ## Meta: Document Revision Log
 
 | Date | Status | Changes |
@@ -435,3 +531,5 @@ With the starting defaults above, code can proceed in this sequence:
 | 2026-04-16 | Initial defaults | Selected the first four starting decisions and added a queue for follow-on decisions |
 | 2026-04-16 | Timing and safety defaults | Added switch debounce, matrix timing, and solenoid safety starting defaults |
 | 2026-04-16 | Persistence and protocol defaults | Added local persistence defaults and the matrix-to-control command contract |
+| 2026-04-16 | Draft+ | Added Round 2 clarification questions for implementation details |
+| [NEXT] | Locked | [Timestamp when decisions are committed] |
