@@ -5,7 +5,14 @@ This top-level copy mirrors the firmware-level contract at:
 
 Use this document to lock architecture and behavior decisions before implementation.
 
-**Status:** Under Definition
+## System Partition Note
+
+This contract now reflects the current multi-board split:
+- the matrix board owns switch scanning, debounce, and lamp-drive timing
+- the control board owns game state, scoring, audio, diagnostics, display behavior, and high-level output policy
+- the control board should consume debounced events and send high-level lamp intent rather than directly multiplex the lamp or switch matrix
+
+**Status:** Initial defaults selected
 **Last Updated:** 2026-04-16
 **Owner:** [You]
 **Reference Sources:**
@@ -182,9 +189,9 @@ GAME_OVER --[display high score]--> ATTRACT
 
 ---
 
-## VI. CRITICAL DESIGN DECISIONS - USER INPUT REQUIRED
+## VI. STARTING DESIGN DECISIONS — INITIAL DEFAULTS
 
-These decisions must be locked in before code begins. Edit this section with your choices.
+These are the first decisions to unblock implementation. More decisions will likely be added as bring-up continues, but the defaults below give the project a clean starting direction.
 
 ### DECISION 1: Audio Storage Model
 
@@ -199,12 +206,12 @@ These decisions must be locked in before code begins. Edit this section with you
 ```
 [ ] A) Local-Only
 [ ] B) Hybrid Local + WiFi Streaming
-[ ] C) Defer Streaming
+[x] C) Defer Streaming
 ```
 
-**Reasoning (user notes):**
+**Reasoning (starting default):**
 ```
-[Edit here to explain choice]
+Bring-up first. Keep playback local and remove WiFi or PC-server dependency until core game-state audio is proven stable.
 ```
 
 ---
@@ -220,14 +227,14 @@ These decisions must be locked in before code begins. Edit this section with you
 
 **Decision:**
 ```
-Playback Scope: [ ] A) Attract-Only  [ ] B) Full Immersion  [ ] C) Hybrid Events
-Interrupt on Tilt: [ ] Yes  [ ] No
-Interrupt on Drain: [ ] Yes  [ ] No
+Playback Scope: [ ] A) Attract-Only  [ ] B) Full Immersion  [x] C) Hybrid Events
+Interrupt on Tilt: [x] Yes  [ ] No
+Interrupt on Drain: [x] Yes  [ ] No
 ```
 
-**Reasoning (user notes):**
+**Reasoning (starting default):**
 ```
-[Edit here to explain choice]
+Use attract and event fanfares without continuous in-play background music. This keeps gameplay cues clear while avoiding unnecessary complexity in the first pass.
 ```
 
 ---
@@ -242,10 +249,10 @@ Interrupt on Drain: [ ] Yes  [ ] No
 
 **Decision:**
 ```
-Use home-edition main_firmware.cpp as authoritative source: [ ] Agree  [ ] Discuss Further
+Use home-edition main_firmware.cpp as authoritative source: [x] Agree  [ ] Discuss Further
 
 If discussing further, please note concerns:
-[Edit here]
+None at this time.
 ```
 
 ---
@@ -261,25 +268,162 @@ If discussing further, please note concerns:
 
 **Decision:**
 ```
-Timeline: [ ] A) Now (Full Parity)  [ ] B) Phased (2 weeks)  [ ] C) Minimal v1.0
+Timeline: [ ] A) Now (Full Parity)  [x] B) Phased (2 weeks)  [ ] C) Minimal v1.0
 ```
 
-**Reasoning (user notes):**
+**Reasoning (starting default):**
 ```
-[Edit here to explain choice]
+Bring up the core game loop and audio behavior first, while still keeping early diagnostic coverage for logic and display validation.
 ```
 
 ---
 
-## VII. NEXT STEPS (Blocked Until Decisions Locked)
+## VII. NEXT DECISION SET — TIMING AND SAFETY DEFAULTS
 
-Once the four decisions above are locked, code will follow this sequence:
+These are the next starting defaults to support reliable bench bring-up.
 
-1. Audio Module -> Integrate game-state-to-music wiring (requestMusic() called from state machine)
-2. Scoring Module -> Port 22-switch scoring matrix from legacy code
-3. Bonus Module -> Countdown logic and multiplier advancement
-4. Diagnostics Module -> Implement chosen diagnostic scope (Decision 4)
-5. Integration Test -> Verify state transitions, lamp updates, audio playback, solenoid firing
+### DECISION 5: Matrix-Board Switch Event Contract
+
+**Question:** What should the matrix board report to the control board for switch activity during the first playable firmware?
+
+**Options:**
+- A) Conservative: 10 ms scan with 30 ms debounce before reporting events
+- B) Balanced: 5 ms scan with 20 ms debounce and one event per closure
+- C) Fast: 2 ms scan with 10 to 15 ms debounce and faster event delivery
+
+**Decision:**
+```
+Matrix-board scan interval: [ ] A) 10 ms  [x] B) 5 ms  [ ] C) 2 ms
+Matrix-board debounce window: [ ] 30 ms  [x] 20 ms  [ ] 10 to 15 ms
+Reported edge behavior: [x] One score event per closure until release
+Control-board role: [x] Consume debounced events only
+```
+
+**Reasoning (starting default):**
+```
+The responsiveness target stays the same, but the ownership is now on the matrix board. The control board should receive clean switch events rather than raw matrix timing.
+```
+
+---
+
+### DECISION 6: Solenoid Safety and Pulse Policy
+
+**Question:** What safety limits should be applied to gameplay solenoids during early bring-up?
+
+**Options:**
+- A) Strict protection: 25 to 30 ms default pulse cap, long cooldown, one coil at a time
+- B) Balanced protection: 35 ms default pulse cap, short retrigger lockout, tune per coil later
+- C) Permissive bring-up: looser software limits for faster experimentation
+
+**Decision:**
+```
+Pulse cap default: [ ] A) 25 to 30 ms  [x] B) 35 ms  [ ] C) Loose and tune later
+Retrigger lockout: [ ] 50 ms  [x] 125 ms  [ ] Disabled
+Disable on tilt or fault: [x] Yes  [ ] No
+```
+
+**Reasoning (starting default):**
+```
+Protect coils first. Conservative software caps reduce the risk of overheating or driver abuse while still allowing realistic bench testing.
+```
+
+**Safety rules:**
+- A solenoid may not re-fire while it is already active
+- A hard timeout always wins over gameplay requests
+- Tilt or fault states immediately suppress gameplay solenoid firing
+- Per-coil tuning can be added later, but the global safety cap remains in place
+
+---
+
+## VIII. NEXT DECISION SET — PERSISTENCE AND BOARD PROTOCOL DEFAULTS
+
+These defaults define what the control board remembers and how it exchanges intent and status with the matrix board.
+
+### DECISION 7: Persistence and Save Policy
+
+**Question:** What game and service data should persist across power cycles?
+
+**Options:**
+- A) Minimal: only the most basic service settings persist
+- B) Balanced: high scores, audits, and service settings persist locally
+- C) Full logging: detailed per-game history and event logs persist
+
+**Decision:**
+```
+Data scope: [ ] A) Minimal  [x] B) Balanced  [ ] C) Full logging
+Storage owner: [x] Control board local nonvolatile storage
+Write timing: [ ] Every event  [x] End-of-ball and settings-change checkpoints  [ ] Manual save only
+Factory reset path: [x] Yes  [ ] No
+```
+
+**Reasoning (starting default):**
+```
+Keep the machine useful and serviceable without creating unnecessary flash wear or implementation complexity in the first pass.
+```
+
+**Default persisted items:**
+- high score table
+- service and bookkeeping counters
+- audio and gameplay option flags
+- protocol or configuration version marker for upgrades
+
+---
+
+### DECISION 8: Matrix-Board Command Protocol and Lamp Intent Model
+
+**Question:** How should the control board and matrix board exchange gameplay information?
+
+**Options:**
+- A) Raw mirror: matrix board streams raw row and column state and the control board interprets everything
+- B) Event and intent split: matrix board sends debounced switch and health events; control board sends lamp intent and mode commands
+- C) Autonomous matrix: matrix board handles significant local game logic itself
+
+**Decision:**
+```
+Interface model: [ ] A) Raw mirror  [x] B) Event and intent split  [ ] C) Autonomous matrix
+Heartbeat or ready status: [ ] Optional  [x] Required
+Loss-of-link behavior: [x] Fail safe to non-destructive state
+Protocol version field: [x] Yes  [ ] No
+```
+
+**Reasoning (starting default):**
+```
+The matrix board should handle the timing-sensitive work, while the control board remains the game-logic authority. That keeps responsibilities clear and easier to debug.
+```
+
+**Default message classes:**
+- matrix board to control board: switch closed or released events, stuck-switch or fault reports, heartbeat or ready status, diagnostics status
+- control board to matrix board: lamp intents, mode changes, diagnostics requests, reset or inhibit commands
+
+**Lamp contract default:**
+- the control board expresses feature or lamp intent
+- the matrix board owns the actual multiplex timing and low-level lamp-drive behavior
+
+---
+
+## IX. REMAINING DECISIONS QUEUE
+
+These are still likely next after the protocol defaults are in place:
+
+1. Display or headbox integration scope for v1
+2. Audio asset format, naming, and fallback behavior
+3. Service-menu depth and bookkeeping detail level
+
+---
+
+## X. NEXT STEPS
+
+With the starting defaults above, code can proceed in this sequence:
+
+1. Audio Module -> Integrate game-state-to-music wiring from the state machine
+2. Scoring Module -> Port the 22-switch scoring matrix from the proven legacy source
+3. Matrix Interface Module -> Apply the matrix-board switch event contract
+4. Driver Safety Module -> Apply solenoid pulse limits and lockout rules
+5. Persistence Module -> Store high scores, counters, and service settings with safe write timing
+6. Board Protocol Module -> Implement matrix-board event and lamp-intent messaging
+7. Bonus Module -> Restore countdown logic and multiplier behavior
+8. Diagnostics Module -> Implement the phased diagnostic path
+9. Integration Test -> Verify state transitions, lamp updates, audio playback, and solenoid firing
 
 ---
 
@@ -287,5 +431,7 @@ Once the four decisions above are locked, code will follow this sequence:
 
 | Date | Status | Changes |
 |------|--------|---------|
-| 2026-04-16 | Draft | Created from archaeology phase; awaiting user decisions on 4 critical questions |
-| [NEXT] | Locked | [Timestamp when decisions are committed] |
+| 2026-04-16 | Draft | Created from archaeology phase; awaiting user decisions on the first contract pass |
+| 2026-04-16 | Initial defaults | Selected the first four starting decisions and added a queue for follow-on decisions |
+| 2026-04-16 | Timing and safety defaults | Added switch debounce, matrix timing, and solenoid safety starting defaults |
+| 2026-04-16 | Persistence and protocol defaults | Added local persistence defaults and the matrix-to-control command contract |
