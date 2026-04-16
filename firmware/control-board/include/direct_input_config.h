@@ -25,6 +25,7 @@ constexpr const char* CAPTAIN_DIRECT_INPUT_NAMES[DIRECT_INPUT_COUNT] = {
     "Start"
 };
 
-constexpr bool CAPTAIN_DIRECT_INPUT_ACTIVE_LOW = true;
+// Inputs are externally pulled down and switch to +3V3 when asserted.
+constexpr bool CAPTAIN_DIRECT_INPUT_ACTIVE_LOW = false;
 
 #endif

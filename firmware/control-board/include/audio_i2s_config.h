@@ -15,16 +15,16 @@ constexpr uint8_t CAPTAIN_AUDIO_LRCK_PIN = 13;
 #endif
 
 constexpr uint32_t CAPTAIN_AUDIO_SAMPLE_RATE = 22050;
-constexpr uint16_t CAPTAIN_AUDIO_TEST_AMPLITUDE = 5000;
+constexpr uint16_t CAPTAIN_AUDIO_TEST_AMPLITUDE = 1200;
 
 // Bring-up test pattern played on boot to validate MAX98357 wiring/audio path.
 constexpr bool CAPTAIN_AUDIO_STARTUP_TEST_ENABLED = true;
-constexpr uint8_t CAPTAIN_AUDIO_STARTUP_TEST_REPEATS = 2;
-constexpr uint16_t CAPTAIN_AUDIO_STARTUP_TONE_MS = 100;
-constexpr uint16_t CAPTAIN_AUDIO_STARTUP_GAP_MS = 35;
+constexpr uint8_t CAPTAIN_AUDIO_STARTUP_TEST_REPEATS = 1;
+constexpr uint16_t CAPTAIN_AUDIO_STARTUP_TONE_MS = 80;
+constexpr uint16_t CAPTAIN_AUDIO_STARTUP_GAP_MS = 30;
 
 // Keeps I2S clocks/data active in short bursts for easier logic-analyzer probing.
-constexpr bool CAPTAIN_AUDIO_CONTINUOUS_DIAGNOSTIC = true;
+constexpr bool CAPTAIN_AUDIO_CONTINUOUS_DIAGNOSTIC = false;
 constexpr uint32_t CAPTAIN_AUDIO_CONTINUOUS_INTERVAL_MS = 90;
 constexpr uint16_t CAPTAIN_AUDIO_CONTINUOUS_TONE_MS = 45;
 

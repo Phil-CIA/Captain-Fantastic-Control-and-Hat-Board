@@ -14,7 +14,8 @@ extern Adafruit_7segment ledDisplay;
 void initDisplay();
 void displayStartupTest();
 void displayGoodMessage(uint16_t durationMs);
-void updateLEDScore(uint32_t score);
+void displayStatusMessage(const char* text, bool wifiConnected = false);
+void updateLEDScore(uint32_t score, bool wifiConnected = false);
 void clearDisplay();
 void setDisplayBrightness(uint8_t level);
 
