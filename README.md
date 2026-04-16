@@ -24,6 +24,7 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 
 ## Current firmware definition draft
 - `firmware/control-board/docs/SYSTEM_BEHAVIOR_CONTRACT.md` – working behavior contract for game states, scoring, audio policy, storage budget, diagnostics, and unresolved decisions to lock before code work
+- `docs/SYSTEM_BEHAVIOR_CONTRACT.md` – top-level copy of the same contract for quick review/edit from the main docs area
 
 ## Current status
 - New focused repo created on **2026-04-09**
