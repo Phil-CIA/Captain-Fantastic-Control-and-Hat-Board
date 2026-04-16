@@ -22,6 +22,9 @@ The HAT board is **not** a revision of the control board. It is a companion boar
 - `firmware/control-board/` – clean control-board firmware baseline for this repo
 - `docs/` – project status, redesign notes, firmware migration notes, and bring-up checklists
 
+## Current firmware definition draft
+- `firmware/control-board/docs/SYSTEM_BEHAVIOR_CONTRACT.md` – working behavior contract for game states, scoring, audio policy, storage budget, diagnostics, and unresolved decisions to lock before code work
+
 ## Current status
 - New focused repo created on **2026-04-09**
 - The current KiCad files uploaded to GitHub for both boards have been merged into this cleaned repo baseline
