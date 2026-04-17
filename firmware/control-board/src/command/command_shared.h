@@ -10,6 +10,7 @@ struct CommandContext {
     captain::ota::Runtime& otaRuntime;
     captain::audio::Runtime& audioRuntime;
     captain::matrix::Runtime& matrixRuntime;
+    captain::protocol::Runtime& protocolRuntime;
     captain::service::Runtime& serviceRuntime;
     captain::input::overlay::Runtime& inputOverlayRuntime;
     captain::ota::StatusCallback otaStatusCallback;

@@ -21,6 +21,7 @@
 #include "app_mode_config.h"
 #include "audio_i2s_config.h"
 #include "audio_runtime.h"
+#include "board_protocol_runtime.h"
 #include "captain_mapping.h"
 #include "command_runtime.h"
 #include "displays.h"
@@ -61,6 +62,7 @@ captain::headbox::Runtime headboxRuntime = {};
 captain::ota::Runtime otaRuntime = {};
 captain::audio::Runtime audioRuntime = {};
 captain::matrix::Runtime matrixRuntime = {};
+captain::protocol::Runtime protocolRuntime = {};
 captain::service::Runtime serviceRuntime = {};
 captain::input::overlay::Runtime inputOverlayRuntime = {};
 Adafruit_SSD1306 debugOled(CAPTAIN_DEBUG_OLED_WIDTH, CAPTAIN_DEBUG_OLED_HEIGHT, &Wire, CAPTAIN_DEBUG_OLED_RESET_PIN);
@@ -467,6 +469,7 @@ void pollSerialAudioCommands() {
     captain::command::pollSerial(otaRuntime,
                                  audioRuntime,
                                  matrixRuntime,
+                                 protocolRuntime,
                                  serviceRuntime,
                                  inputOverlayRuntime,
                                  updateOtaStatus,
@@ -505,7 +508,9 @@ void setup() {
     Wire.begin(CAPTAIN_I2C_SDA_PIN, CAPTAIN_I2C_SCL_PIN, CAPTAIN_I2C_FREQUENCY_HZ);
     scanI2CBus();
     captain::matrix::initialize(matrixRuntime);
+    captain::protocol::initialize(protocolRuntime);
     captain::matrix::begin(matrixRuntime, millis());
+    captain::protocol::begin(protocolRuntime, millis());
     reportDebugOledStatus();
     initDebugOled();
     writeDebugOledStatus("Mode: STARTUP", CAPTAIN_APP_MODE_NAME, "Init checks...");
@@ -551,6 +556,7 @@ void loop() {
     updateHeartbeat(now);
     updateDisplayCounter(now);
     captain::matrix::update(matrixRuntime, now, onMatrixSwitchEdge);
+    captain::protocol::update(protocolRuntime, now, captain::matrix::isLinkHealthy(matrixRuntime));
     pollDirectInputs(now);
     runOptionalOutputTest(now, captain::matrix::isLinkHealthy(matrixRuntime));
     captain::headbox::update(headboxRuntime, now, otaRuntime.inProgress, displayCounter);

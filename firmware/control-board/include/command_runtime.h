@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include "audio_runtime.h"
+#include "board_protocol_runtime.h"
 #include "input_overlay_runtime.h"
 #include "matrix_interface_runtime.h"
 #include "ota_runtime.h"
@@ -15,6 +16,7 @@ namespace command {
 void pollSerial(captain::ota::Runtime& otaRuntime,
                 captain::audio::Runtime& audioRuntime,
                 captain::matrix::Runtime& matrixRuntime,
+                captain::protocol::Runtime& protocolRuntime,
                 captain::service::Runtime& serviceRuntime,
                 captain::input::overlay::Runtime& inputOverlayRuntime,
                 captain::ota::StatusCallback otaStatusCallback,
