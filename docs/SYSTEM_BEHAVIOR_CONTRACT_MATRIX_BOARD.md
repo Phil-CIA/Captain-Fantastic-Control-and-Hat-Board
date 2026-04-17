@@ -29,6 +29,21 @@ This board should stay simple, deterministic, and easy to debug in the first pla
 ### Locked-answer consistency note
 A few answers were marked as uncertain during review. To keep the contract implementable, the document uses these conservative provisional defaults: expose the ready flag to the control board, count non-fatal noise events, allow matrix lamp-walk primitives, use per-switch bitmask if a change mask is later enabled, and keep lamp output binary on/off only for v1.
 
+## Recommended answers for the new question rounds
+
+These are analysis recommendations only, intended to make the next answer pass internally consistent and easy to implement.
+
+- **Q11:** Prefer shadow buffer + explicit commit required, with visible apply latency target of **<= 10 ms**.
+- **Q12:** Allow ready=true only for non-fatal degraded cases such as missing optional telemetry, operator-approved stuck-switch override, or historical link warnings; keep active lamp faults and scan timing violations fatal.
+- **Q13:** Use **periodic time-based checkpoints** for persisted counters, and allow reset authority from **both** control command and local service action.
+- **Q14:** Keep release transitions **not exposed** in v1; let control infer them from bitmap polling with a practical assumption of **<= 20 ms** polling.
+- **Q15:** Use **latched flag + last bad address/value register** for invalid-write observability, and only clear when the bus is idle and no new fault has appeared since last read.
+- **Q16:** Publish a **frozen v1 register table** in this contract using **byte offsets from base**, including version, ready/fault flags, switch bitmap, and lamp write window; reserve change-mask space if needed later.
+- **Q17:** Set link-loss timeout to **1000 ms**, require **2** healthy heartbeats to clear it, and **reapply the retained full lamp intent immediately** on recovery.
+- **Q18:** Define a single snapshot epoch rule, preferably **read flags then bitmap latches the same epoch**, and clear any future change-mask only on **explicit ack write**.
+- **Q19:** Use a **per-switch override mask**, keep it valid **until power cycle** unless explicitly cleared, and require a **status flag + periodic service indication** while active.
+- **Q20:** Use **NVS/flash** for persistence, checkpoint about **every 60 s**, and treat power-fail retention as **best effort** rather than hard-guaranteed.
+
 ---
 
 ## I. Interface Contract (Control <-> Matrix)
@@ -249,91 +264,104 @@ Self-test trigger source: [x] Control command  [ ] Local mode pin/switch  [ ] Bo
 
 ---
 
-## VII. Round 3 Clarification Questions
+## VII. Round 3 Clarification Questions — Locked
 
 ### Q11: Lamp Write Atomicity Scope
 Rationale: DECISION 7 says visible updates do not require full-row atomic swap, while Q2 enables shadow buffer + commit. This needs a single v1 rule.
 ```
-Lamp update mode in v1: [ ] Immediate per-byte apply  [ ] Shadow buffer + explicit commit required
-If commit is required, max apply latency target: [ ] <= 5 ms  [ ] <= 10 ms  [ ] <= 20 ms
+Lamp update mode in v1: [ ] Immediate per-byte apply  [x] Shadow buffer + explicit commit required
+If commit is required, max apply latency target: [ ] <= 5 ms  [x] <= 10 ms  [ ] <= 20 ms
 ```
 
 ### Q12: Ready vs Degraded Definition
 Rationale: Q7 allows ready=true with degraded warnings while also requiring self-check pass. Define what is non-fatal.
 ```
-Allowed while ready=true (non-fatal degraded): [ ] Missing optional telemetry  [ ] One or more stuck switches (operator override active)  [ ] Link warning history only
-Disallowed while ready=true (fatal): [ ] Active lamp driver fault  [ ] Scan engine timing violation  [ ] Register-map CRC/validation failure
+Allowed while ready=true (non-fatal degraded): [x] Missing optional telemetry  [x] One or more stuck switches (operator override active)  [x] Link warning history only
+Disallowed while ready=true (fatal): [x] Active lamp driver fault  [x] Scan engine timing violation  [x] Register-map CRC/validation failure
 ```
 
 ### Q13: Counter Persistence Policy
 Rationale: Q9 enables reboot persistence; this needs storage and lifecycle policy to prevent wear and unclear reset semantics.
 ```
-Persisted counter write policy: [ ] Every event  [ ] Periodic checkpoint (time-based)  [ ] Periodic checkpoint (delta/event-count based)
-Counter reset authority: [ ] Control command only  [ ] Local service action only  [ ] Both
+Persisted counter write policy: [ ] Every event  [ ] Periodic checkpoint (time-based)  [x] Periodic checkpoint (delta/event-count based)
+Counter reset authority: [ ] Control command only  [ ] Local service action only  [x] Both
 ```
 
 ### Q14: Release Semantics for Gameplay Logic
 Rationale: DECISION 2 disables release transitions, but some game logic may require release detection.
 ```
-Release information source in v1: [ ] Not exposed (control infers from bitmap polling)  [ ] Explicit release bitmask register  [ ] Optional service-only release telemetry
-If inferred, minimum control polling period assumption: [ ] <= 10 ms  [ ] <= 20 ms  [ ] <= 50 ms
+Release information source in v1: [x] Not exposed (control infers from bitmap polling)  [ ] Explicit release bitmask register  [ ] Optional service-only release telemetry
+If inferred, minimum control polling period assumption: [ ] <= 10 ms  [x] <= 20 ms  [ ] <= 50 ms
 ```
 
 ### Q15: Invalid Write Observability
 Rationale: DECISION 10 disables invalid-write counters, while DECISION 11 latches warnings. Define minimum observability and clear behavior.
 ```
-Invalid-write diagnostics in v1: [ ] Latched flag only  [ ] Latched flag + last bad address/value register  [ ] Add counter despite DECISION 10
-Warning clear precondition: [ ] Clear anytime by command  [ ] Clear only when bus idle and no new faults since last read
+Invalid-write diagnostics in v1: [ ] Latched flag only  [x] Latched flag + last bad address/value register  [ ] Add counter despite DECISION 10
+Warning clear precondition: [ ] Clear anytime by command  [x] Clear only when bus idle and no new faults since last read
 ```
 
 ---
 
-## VIII. Round 4 Clarification Questions
+## VIII. Round 4 Clarification Questions — Locked
 
 ### Q16: Register Map Baseline (v1 addresses)
 Rationale: DECISION 1 and Q1 lock a fixed version register, but v1 integration still needs a concrete baseline map so both boards can compile against identical offsets.
 ```
-Publish a frozen v1 register table in this contract: [ ] Yes  [ ] No
-If yes, include explicit addresses for: [ ] Protocol version  [ ] Ready/fault flags  [ ] Switch bitmap  [ ] Change mask (if enabled)  [ ] Lamp write window
-Addressing style: [ ] Byte offsets from base  [ ] 16-bit absolute addresses
+Publish a frozen v1 register table in this contract: [x] Yes  [ ] No
+If yes, include explicit addresses for: [x] Protocol version  [x] Ready/fault flags  [x] Switch bitmap  [x] Change mask (if enabled)  [x] Lamp write window
+Addressing style: [x] Byte offsets from base  [ ] 16-bit absolute addresses
 ```
+
+**Frozen v1 register baseline:**
+
+| Offset | Name | Access | Notes |
+|--------|------|--------|-------|
+| 0x00 | Protocol version | R | Single-byte v1 protocol identifier |
+| 0x01 | Ready/status flags | R | Ready, degraded, override-active, link-lost bits |
+| 0x02 | Fault flags | R | Lamp, switch, validation, timing fault bits |
+| 0x04-0x07 | Switch bitmap | R | Debounced switch-state snapshot |
+| 0x08-0x0B | Change-mask window | R (reserved) | Reserved for future explicit changed-bit publication |
+| 0x10-0x1F | Lamp write window | W | Shadow-buffer or retained-intent write region |
+| 0x20 | Commit/apply register | W | Explicit apply trigger for staged lamp writes |
+| 0x21 | Warning clear/ack | W | Clear latched warnings when preconditions are met |
 
 ### Q17: Heartbeat and Timeout Numeric Contract
 Rationale: DECISION 3 chooses a 500 ms heartbeat target and hold-last behavior, but timeout and recovery thresholds remain undefined.
 ```
-Link-loss timeout threshold: [ ] 750 ms  [ ] 1000 ms  [ ] 1500 ms
-Consecutive healthy heartbeats required to clear link-loss state: [ ] 1  [ ] 2  [ ] 3
-When link recovers, lamp state source: [ ] Keep held state until next control write  [ ] Reapply full retained intent immediately
+Link-loss timeout threshold: [ ] 750 ms  [x] 1000 ms  [ ] 1500 ms
+Consecutive healthy heartbeats required to clear link-loss state: [ ] 1  [x] 2  [ ] 3
+When link recovers, lamp state source: [ ] Keep held state until next control write  [x] Reapply full retained intent immediately
 ```
 
 ### Q18: Switch Event Ordering and Snapshot Consistency
 Rationale: With bitmap-first publication and optional future change mask, we need one deterministic read-order rule so control logic never mixes epochs.
 ```
-Snapshot consistency rule: [ ] Read flags then bitmap latches same epoch  [ ] Read bitmap then flags latches same epoch  [ ] Explicit snapshot-strobe register required
-Change-mask clear behavior (if enabled later): [ ] Clear on read  [ ] Clear on next scan tick  [ ] Clear only on explicit ack write
+Snapshot consistency rule: [x] Read flags then bitmap latches same epoch  [ ] Read bitmap then flags latches same epoch  [ ] Explicit snapshot-strobe register required
+Change-mask clear behavior (if enabled later): [ ] Clear on read  [ ] Clear on next scan tick  [x] Clear only on explicit ack write
 ```
 
 ### Q19: Stuck-Switch Override Safety Envelope
 Rationale: DECISION 6 allows operator override when stuck switches exist, but runtime constraints for that override are not locked.
 ```
-Override scope: [ ] Per-switch mask  [ ] Global override
-Override lifetime: [ ] Until power cycle  [ ] Timed expiry  [ ] Until explicit clear
-While override active, service indicator requirement: [ ] Status flag only  [ ] Status flag + periodic log/event pulse
+Override scope: [x] Per-switch mask  [ ] Global override
+Override lifetime: [x] Until power cycle  [ ] Timed expiry  [ ] Until explicit clear
+While override active, service indicator requirement: [ ] Status flag only  [x] Status flag + periodic log/event pulse
 ```
 
 ### Q20: Counter Persistence Storage Policy
 Rationale: Q9 enables reboot persistence, and Q13 requests lifecycle policy. We need a concrete storage medium and wear-safe cadence.
 ```
-Persistence medium: [ ] NVS/flash  [ ] External EEPROM/FRAM  [ ] RAM only until shutdown command
-Checkpoint cadence target: [ ] Every 30 s  [ ] Every 60 s  [ ] Every 100 counter deltas
-Power-fail tolerance requirement: [ ] Best effort  [ ] Last complete checkpoint guaranteed
+Persistence medium: [x] NVS/flash  [ ] External EEPROM/FRAM  [ ] RAM only until shutdown command
+Checkpoint cadence target: [ ] Every 30 s  [x] Every 60 s  [ ] Every 100 counter deltas
+Power-fail tolerance requirement: [x] Best effort  [ ] Last complete checkpoint guaranteed
 ```
 
 ---
 
 ## IX. Next Steps
 
-Once the decisions above are locked, implementation sequence for matrix board should be:
+With the locked answers above, implementation sequence for matrix board should be:
 1. Register map and version field
 2. Scan/debounce engine with stable-state reporting
 3. Link supervision and ready/fault flags
@@ -350,3 +378,5 @@ Once the decisions above are locked, implementation sequence for matrix board sh
 | 2026-04-17 | Draft | Created initial matrix-board contract with iterative decision/question rounds |
 | 2026-04-17 | Guidance added | Added concise recommendation notes for answering the matrix-board decision set |
 | 2026-04-17 | Locked user answers | Integrated the v1 I2C register-map choices, debounce policy, safe-state rules, diagnostics, and round-1/round-2 answers |
+| 2026-04-17 | Round 3/4 guidance added | Added recommendation defaults for the newly appended atomicity, persistence, register-map, timeout, and override questions |
+| 2026-04-17 | Round 3/4 answers locked | Locked atomicity, degraded-ready rules, register-map baseline, timeout/recovery numbers, override envelope, and persistence policy for v1 |
