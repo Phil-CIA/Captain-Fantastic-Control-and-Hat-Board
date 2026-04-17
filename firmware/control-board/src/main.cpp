@@ -21,11 +21,13 @@
 #include "app_mode_config.h"
 #include "audio_i2s_config.h"
 #include "audio_runtime.h"
+#include "captain_mapping.h"
 #include "command_runtime.h"
 #include "displays.h"
 #include "external_flash_config.h"
 #include "headbox_runtime.h"
 #include "i2c_bus_config.h"
+#include "matrix_interface_runtime.h"
 #include "ota_config.h"
 #include "ota_runtime.h"
 #include "solenoid_gpio_config.h"
@@ -57,6 +59,7 @@ int8_t activeOutput = -1;
 captain::headbox::Runtime headboxRuntime = {};
 captain::ota::Runtime otaRuntime = {};
 captain::audio::Runtime audioRuntime = {};
+captain::matrix::Runtime matrixRuntime = {};
 captain::input::overlay::Runtime inputOverlayRuntime = {};
 Adafruit_SSD1306 debugOled(CAPTAIN_DEBUG_OLED_WIDTH, CAPTAIN_DEBUG_OLED_HEIGHT, &Wire, CAPTAIN_DEBUG_OLED_RESET_PIN);
 Adafruit_NeoPixel* heartbeatRgb = nullptr;
@@ -66,6 +69,7 @@ uint8_t debugOledAddress = CAPTAIN_DEBUG_OLED_I2C_ADDRESS_PRIMARY;
 void writeDebugOledStatus(const char* line1, const char* line2 = nullptr, const char* line3 = nullptr);
 void updateOtaStatus(const char* line1, const char* line2, const char* line3);
 void updateOnboardDisplayForOtaStatus(const char* line1, const char* line2, const char* line3);
+void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs);
 int8_t parsePercentFromStatusText(const char* text) {
     if (text == nullptr) {
         return -1;
@@ -412,8 +416,20 @@ void pollDirectInputs(uint32_t now) {
     captain::input::poll(now, INPUT_POLL_MS, onDirectInputChanged);
 }
 
-void runOptionalOutputTest(uint32_t now) {
-    if (!CAPTAIN_ENABLE_OUTPUT_TEST || now - lastOutputTestMs < OUTPUT_TEST_INTERVAL_MS) {
+void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
+    if (!CAPTAIN_ENABLE_OUTPUT_TEST) {
+        return;
+    }
+
+    if (!matrixLinkHealthy) {
+        if (activeOutput >= 0) {
+            digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], LOW);
+            activeOutput = -1;
+        }
+        return;
+    }
+
+    if (now - lastOutputTestMs < OUTPUT_TEST_INTERVAL_MS) {
         return;
     }
 
@@ -432,9 +448,23 @@ void runOptionalOutputTest(uint32_t now) {
     writeDebugOledStatus("Output test", CAPTAIN_SOLENOID_NAMES[activeOutput], "5V proof-of-life");
 }
 
+void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs) {
+    (void)nowMs;
+
+    if (!closed) {
+        return;
+    }
+
+    Serial.printf("Matrix switch closed R%uC%u -> %s\n",
+                  static_cast<unsigned>(row),
+                  static_cast<unsigned>(col),
+                  captainSwitchName(row, col));
+}
+
 void pollSerialAudioCommands() {
     captain::command::pollSerial(otaRuntime,
                                  audioRuntime,
+                                 matrixRuntime,
                                  inputOverlayRuntime,
                                  updateOtaStatus,
                                  ::stopAudioPlaybackForOtaBridge,
@@ -470,6 +500,8 @@ void setup() {
 
     Wire.begin(CAPTAIN_I2C_SDA_PIN, CAPTAIN_I2C_SCL_PIN, CAPTAIN_I2C_FREQUENCY_HZ);
     scanI2CBus();
+    captain::matrix::initialize(matrixRuntime);
+    captain::matrix::begin(matrixRuntime, millis());
     reportDebugOledStatus();
     initDebugOled();
     writeDebugOledStatus("Mode: STARTUP", CAPTAIN_APP_MODE_NAME, "Init checks...");
@@ -514,8 +546,9 @@ void loop() {
     captain::ota::maintainWifiConnection(otaRuntime, now, updateOtaStatus);
     updateHeartbeat(now);
     updateDisplayCounter(now);
+    captain::matrix::update(matrixRuntime, now, onMatrixSwitchEdge);
     pollDirectInputs(now);
-    runOptionalOutputTest(now);
+    runOptionalOutputTest(now, captain::matrix::isLinkHealthy(matrixRuntime));
     captain::headbox::update(headboxRuntime, now, otaRuntime.inProgress, displayCounter);
     captain::audio::updatePlayback(audioRuntime);
     captain::audio::updateDiagnostic(audioRuntime, now);

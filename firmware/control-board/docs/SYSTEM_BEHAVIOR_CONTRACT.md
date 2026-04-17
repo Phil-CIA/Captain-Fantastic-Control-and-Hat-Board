@@ -799,7 +799,45 @@ These are the next likely open items after the round 4 answers:
 
 ---
 
-## XIV. NEXT STEPS
+## XIV. ROUND 5 LOCK-IN QUESTIONS (Wire Format, Assets, Service UX)
+
+### Q31: Matrix Wire Contract v1 Shape
+
+**Answer:**
+```
+Primary matrix payload type: [ ] Debounced bitmap snapshot  [ ] Edge event packet stream  [ ] Hybrid snapshot + change mask
+Include sequence counter in v1 payload: [ ] Yes  [ ] No
+Include per-message CRC in v1 payload: [ ] Yes  [ ] No
+Protocol transport for v1: [ ] I2C register map  [ ] Framed serial  [ ] Other
+```
+
+### Q32: Audio Asset Naming and Path Contract
+
+**Answer:**
+```
+Use these canonical attract/start/bonus/game-over/hiscore names in external flash: [ ] Yes  [ ] No
+Keep short alias fallbacks enabled for bring-up compatibility: [ ] Yes  [ ] No
+Require exact filename match before release build: [ ] Yes  [ ] No
+```
+
+### Q33: Maintenance Menu UX and Navigation
+
+**Answer:**
+```
+Navigation input source for service menu: [ ] SW2 + Start/Tilt  [ ] Serial-only  [ ] Hybrid
+Menu style for v1: [ ] Flat list  [ ] Step-by-step wizard
+Show explicit save/commit prompt on settings changes: [ ] Yes  [ ] No
+Allow direct coil/lamp/audio bench actions in same menu tree: [ ] Yes  [ ] No
+```
+
+**Reasoning (optional notes):**
+```
+[Edit here]
+```
+
+---
+
+## XV. NEXT STEPS
 
 With the locked answers above, code can proceed in this sequence:
 
@@ -816,7 +854,7 @@ With the locked answers above, code can proceed in this sequence:
 
 ---
 
-## XV. Meta: Document Revision Log
+## XVI. Meta: Document Revision Log
 
 | Date | Status | Changes |
 |------|--------|---------|
@@ -830,3 +868,4 @@ With the locked answers above, code can proceed in this sequence:
 | 2026-04-17 | 🟡 Draft+++ | Added Round 4 clarification questions for calibration, protocol details, and operations |
 | 2026-04-17 | 🟢 Round 3 answers locked | Added display scope, flash audio layout, fault behavior, audit scope, and acceptance criteria |
 | 2026-04-17 | 🟢 Round 4 answers locked | Added bonus acceleration, extra-ball cadence, matrix-interface guidance, NVS write spacing, reboot behavior, operator fault display, and phased coding approval |
+| 2026-04-17 | 🟡 Round 5 questions added | Added lock-in questions for protocol wire format, audio asset naming contract, and maintenance menu navigation |

@@ -16,6 +16,7 @@ constexpr bool CAPTAIN_ENABLE_OUTPUT_TEST = CAPTAIN_ENABLE_OUTPUT_TEST_DEFAULT;
 
 void pollSerial(captain::ota::Runtime& otaRuntime,
                 captain::audio::Runtime& audioRuntime,
+                captain::matrix::Runtime& matrixRuntime,
                 captain::input::overlay::Runtime& inputOverlayRuntime,
                 captain::ota::StatusCallback otaStatusCallback,
                 captain::ota::StopAudioCallback stopAudioCallback,
@@ -36,6 +37,7 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
     CommandContext context = {
         otaRuntime,
         audioRuntime,
+        matrixRuntime,
         inputOverlayRuntime,
         otaStatusCallback,
         stopAudioCallback,
@@ -45,8 +47,16 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
     if (command == "mp3 help") {
         Serial.println("MP3 commands: mp3 startup | mp3 attract | mp3 start | mp3 bonus | mp3 gameover | mp3 hiscore | mp3 stop | mp3 storage");
         Serial.println("OTA commands: ota help | ota status | ota wifi <ssid> <pass> | ota flash [http-url]");
+        Serial.println("Matrix commands: matrix status");
         Serial.println("Input commands: input status");
         Serial.println("Mode commands: mode");
+        return;
+    }
+
+    if (command == "matrix status") {
+        Serial.printf("Matrix detected: %s\n", captain::matrix::isMatrixDetected(matrixRuntime) ? "yes" : "no");
+        Serial.printf("Matrix link healthy: %s\n", captain::matrix::isLinkHealthy(matrixRuntime) ? "yes" : "no");
+        Serial.printf("Matrix diag flags: 0x%02X\n", captain::matrix::diagnosticFlags(matrixRuntime));
         return;
     }
 
