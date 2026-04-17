@@ -47,6 +47,7 @@ constexpr uint32_t HEARTBEAT_INTERVAL_MS = 500;
 constexpr uint32_t DISPLAY_INTERVAL_MS = 250;
 constexpr uint32_t INPUT_POLL_MS = 20;
 constexpr uint32_t OUTPUT_TEST_INTERVAL_MS = 750;
+constexpr uint32_t MATRIX_DEGRADED_WARN_INTERVAL_MS = 15000;
 constexpr float CAPTAIN_AUDIO_MP3_GAIN = 0.12f;
 
 // System vs test behavior is selected by CAPTAIN_APP_MODE_TEST build flag.
@@ -56,8 +57,10 @@ bool heartbeatState = false;
 uint32_t lastHeartbeatMs = 0;
 uint32_t lastDisplayMs = 0;
 uint32_t lastOutputTestMs = 0;
+uint32_t lastMatrixDegradedWarnMs = 0;
 uint32_t displayCounter = 0;
 int8_t activeOutput = -1;
+bool matrixLinkHealthyLast = false;
 captain::headbox::Runtime headboxRuntime = {};
 captain::ota::Runtime otaRuntime = {};
 captain::audio::Runtime audioRuntime = {};
@@ -74,6 +77,7 @@ void writeDebugOledStatus(const char* line1, const char* line2 = nullptr, const 
 void updateOtaStatus(const char* line1, const char* line2, const char* line3);
 void updateOnboardDisplayForOtaStatus(const char* line1, const char* line2, const char* line3);
 void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs);
+void updateMatrixDiagnostics(uint32_t nowMs);
 int8_t parsePercentFromStatusText(const char* text) {
     if (text == nullptr) {
         return -1;
@@ -465,6 +469,32 @@ void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs) {
                   captainSwitchName(row, col));
 }
 
+void updateMatrixDiagnostics(uint32_t nowMs) {
+    const bool linkHealthy = captain::matrix::isLinkHealthy(matrixRuntime);
+
+    if (linkHealthy != matrixLinkHealthyLast) {
+        if (linkHealthy) {
+            Serial.println("Matrix link recovered; leaving degraded mode");
+            if (!otaRuntime.inProgress) {
+                writeDebugOledStatus("Matrix online", "Degraded mode off", nullptr);
+            }
+        } else {
+            Serial.println("Matrix link lost; entering degraded mode (non-fatal)");
+            if (!otaRuntime.inProgress) {
+                writeDebugOledStatus("Matrix offline", "Degraded mode", "Gameplay limited");
+            }
+        }
+        matrixLinkHealthyLast = linkHealthy;
+    }
+
+    if (linkHealthy || (nowMs - lastMatrixDegradedWarnMs < MATRIX_DEGRADED_WARN_INTERVAL_MS)) {
+        return;
+    }
+
+    lastMatrixDegradedWarnMs = nowMs;
+    Serial.println("Matrix board unavailable: running degraded mode (inputs/lamps from matrix disabled)");
+}
+
 void pollSerialAudioCommands() {
     captain::command::pollSerial(otaRuntime,
                                  audioRuntime,
@@ -511,6 +541,10 @@ void setup() {
     captain::protocol::initialize(protocolRuntime);
     captain::matrix::begin(matrixRuntime, millis());
     captain::protocol::begin(protocolRuntime, millis());
+    matrixLinkHealthyLast = captain::matrix::isLinkHealthy(matrixRuntime);
+    if (!matrixLinkHealthyLast) {
+        Serial.println("Matrix board not detected at boot; continuing in degraded mode");
+    }
     reportDebugOledStatus();
     initDebugOled();
     writeDebugOledStatus("Mode: STARTUP", CAPTAIN_APP_MODE_NAME, "Init checks...");
@@ -557,6 +591,7 @@ void loop() {
     updateDisplayCounter(now);
     captain::matrix::update(matrixRuntime, now, onMatrixSwitchEdge);
     captain::protocol::update(protocolRuntime, now, captain::matrix::isLinkHealthy(matrixRuntime));
+    updateMatrixDiagnostics(now);
     pollDirectInputs(now);
     runOptionalOutputTest(now, captain::matrix::isLinkHealthy(matrixRuntime));
     captain::headbox::update(headboxRuntime, now, otaRuntime.inProgress, displayCounter);

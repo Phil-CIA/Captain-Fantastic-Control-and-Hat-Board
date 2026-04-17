@@ -7,6 +7,7 @@
 #include "input_commands.h"
 #include "ota_commands.h"
 #include "service_menu_runtime.h"
+#include <WiFi.h>
 
 namespace captain {
 namespace command {
@@ -57,6 +58,32 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
         Serial.println("Service commands: service help | service menu | service status | service next | service prev | service set <0-100> | service run [switch|coil|audio] | service save | service cancel | service exit");
         Serial.println("Input commands: input status");
         Serial.println("Mode commands: mode");
+        Serial.println("System commands: system status");
+        return;
+    }
+
+    if (command == "system status") {
+        const bool matrixDetected = captain::matrix::isMatrixDetected(matrixRuntime);
+        const bool matrixLinkHealthy = captain::matrix::isLinkHealthy(matrixRuntime);
+        const bool degradedMode = !matrixLinkHealthy;
+
+        Serial.println("System readiness summary");
+        Serial.printf("  Profile: %s\n", CAPTAIN_APP_MODE_NAME);
+        Serial.printf("  WiFi: %s\n", WiFi.status() == WL_CONNECTED ? "connected" : "down");
+        Serial.printf("  OTA status: %s\n", captain::ota::statusText(otaRuntime));
+        Serial.printf("  Audio storage SPIFFS/W25Q128: %s / %s\n",
+                      captain::audio::isInternalSpiffsReady(audioRuntime) ? "ready" : "down",
+                      captain::audio::isExternalFlashReady(audioRuntime) ? "ready" : "down");
+        Serial.printf("  Audio gain: %.2f\n", captain::audio::getMasterGain(audioRuntime));
+        Serial.printf("  Matrix detected/link: %s / %s\n",
+                      matrixDetected ? "yes" : "no",
+                      matrixLinkHealthy ? "healthy" : "down");
+        Serial.printf("  Matrix diag flags: 0x%02X\n", captain::matrix::diagnosticFlags(matrixRuntime));
+        Serial.printf("  Protocol tx ok/fail: %lu / %lu\n",
+                      static_cast<unsigned long>(captain::protocol::txSuccessCount(protocolRuntime)),
+                      static_cast<unsigned long>(captain::protocol::txFailureCount(protocolRuntime)));
+        Serial.printf("  Service menu active: %s\n", serviceRuntime.active ? "yes" : "no");
+        Serial.printf("  Degraded mode: %s\n", degradedMode ? "YES (matrix unavailable)" : "no");
         return;
     }
 
