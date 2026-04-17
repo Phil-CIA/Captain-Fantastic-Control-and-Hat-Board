@@ -534,6 +534,7 @@ void setup() {
     captain::audio::initialize(audioRuntime);
     captain::audio::initPath(audioRuntime, CAPTAIN_SERIALFLASH_SPI_HZ);
     captain::service::initialize(serviceRuntime, captain::audio::getMasterGain(audioRuntime));
+    captain::audio::setMasterGain(audioRuntime, static_cast<float>(serviceRuntime.committedVolumePercent) / 100.0f);
 
     Wire.begin(CAPTAIN_I2C_SDA_PIN, CAPTAIN_I2C_SCL_PIN, CAPTAIN_I2C_FREQUENCY_HZ);
     scanI2CBus();

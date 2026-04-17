@@ -1,8 +1,13 @@
 #include "service_menu_runtime.h"
 
+#include <Preferences.h>
+
 namespace captain {
 namespace service {
 namespace {
+
+constexpr const char* CAPTAIN_SERVICE_PREF_NS = "captain_cfg";
+constexpr const char* CAPTAIN_SERVICE_VOLUME_KEY = "svc_volume";
 
 enum MenuItem : uint8_t {
     Volume = 0,
@@ -35,6 +40,28 @@ uint8_t gainToPercent(float gain) {
         return 100;
     }
     return static_cast<uint8_t>(gain * 100.0f + 0.5f);
+}
+
+uint8_t loadPersistedVolumePercent(uint8_t fallbackPercent) {
+    Preferences preferences;
+    if (!preferences.begin(CAPTAIN_SERVICE_PREF_NS, true)) {
+        return fallbackPercent;
+    }
+
+    const uint8_t persisted = preferences.getUChar(CAPTAIN_SERVICE_VOLUME_KEY, fallbackPercent);
+    preferences.end();
+    return persisted <= 100 ? persisted : fallbackPercent;
+}
+
+bool savePersistedVolumePercent(uint8_t value) {
+    Preferences preferences;
+    if (!preferences.begin(CAPTAIN_SERVICE_PREF_NS, false)) {
+        return false;
+    }
+
+    const size_t written = preferences.putUChar(CAPTAIN_SERVICE_VOLUME_KEY, value);
+    preferences.end();
+    return written == sizeof(uint8_t);
 }
 
 void printHelp() {
@@ -108,7 +135,7 @@ void initialize(Runtime& runtime, float startingGain) {
     runtime.active = false;
     runtime.dirty = false;
     runtime.selectedIndex = Volume;
-    runtime.committedVolumePercent = gainToPercent(startingGain);
+    runtime.committedVolumePercent = loadPersistedVolumePercent(gainToPercent(startingGain));
     runtime.pendingVolumePercent = runtime.committedVolumePercent;
 }
 
@@ -186,7 +213,13 @@ bool handleCommand(const String& command,
 
         captain::audio::setMasterGain(audioRuntime, static_cast<float>(runtime.committedVolumePercent) / 100.0f);
         Serial.printf("Service saved volume: %u%%\n", runtime.committedVolumePercent);
-        Serial.println("Persistence TODO: commit to NVS in persistence module");
+
+        if (savePersistedVolumePercent(runtime.committedVolumePercent)) {
+            Serial.println("Service persistence: volume saved to NVS");
+        } else {
+            Serial.println("Service persistence: NVS write failed");
+        }
+
         publishStatusToOled(oledStatusWriter, runtime, "Saved");
         return true;
     }
