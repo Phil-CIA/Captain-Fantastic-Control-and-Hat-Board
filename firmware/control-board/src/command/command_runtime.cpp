@@ -82,6 +82,11 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
         Serial.printf("  Protocol tx ok/fail: %lu / %lu\n",
                       static_cast<unsigned long>(captain::protocol::txSuccessCount(protocolRuntime)),
                       static_cast<unsigned long>(captain::protocol::txFailureCount(protocolRuntime)));
+        Serial.printf("  Protocol model/version: %u / %u.%u.%u\n",
+                      static_cast<unsigned>(captain::protocol::protocolModel()),
+                      static_cast<unsigned>(captain::protocol::protocolVersionMajor()),
+                      static_cast<unsigned>(captain::protocol::protocolVersionMinor()),
+                      static_cast<unsigned>(captain::protocol::protocolVersionPatch()));
         Serial.printf("  Service menu active: %s\n", serviceRuntime.active ? "yes" : "no");
         Serial.printf("  Degraded mode: %s\n", degradedMode ? "YES (matrix unavailable)" : "no");
         return;
@@ -95,8 +100,20 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
     }
 
     if (command == "matrix proto status") {
+        Serial.printf("Protocol model: %u\n", static_cast<unsigned>(captain::protocol::protocolModel()));
+        Serial.printf("Protocol version: %u.%u.%u\n",
+                      static_cast<unsigned>(captain::protocol::protocolVersionMajor()),
+                      static_cast<unsigned>(captain::protocol::protocolVersionMinor()),
+                      static_cast<unsigned>(captain::protocol::protocolVersionPatch()));
+        Serial.printf("Protocol refresh interval: %lu ms\n",
+                      static_cast<unsigned long>(captain::protocol::refreshIntervalMs()));
+        Serial.printf("Protocol tx frame counter: %lu\n",
+                      static_cast<unsigned long>(captain::protocol::txFrameCounter(protocolRuntime)));
         Serial.printf("Protocol tx ok: %lu\n", static_cast<unsigned long>(captain::protocol::txSuccessCount(protocolRuntime)));
         Serial.printf("Protocol tx fail: %lu\n", static_cast<unsigned long>(captain::protocol::txFailureCount(protocolRuntime)));
+        Serial.printf("Protocol refreshes dirty/heartbeat: %lu / %lu\n",
+                      static_cast<unsigned long>(captain::protocol::dirtyRefreshCount(protocolRuntime)),
+                      static_cast<unsigned long>(captain::protocol::heartbeatRefreshCount(protocolRuntime)));
         for (uint8_t row = 0; row < CAPTAIN_LAMP_ROWS; row++) {
             Serial.printf("  Lamp row %u mask=0x%02X\n",
                           static_cast<unsigned>(row),

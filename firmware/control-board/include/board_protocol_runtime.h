@@ -10,8 +10,12 @@ namespace protocol {
 
 struct Runtime {
     uint32_t lastRefreshMs;
+    uint32_t lastTxMs;
     uint32_t txSuccessCount;
     uint32_t txFailureCount;
+    uint32_t dirtyRefreshCount;
+    uint32_t heartbeatRefreshCount;
+    uint32_t txFrameCounter;
     bool dirty;
     uint8_t lampRowMasks[CAPTAIN_LAMP_ROWS];
 };
@@ -25,6 +29,16 @@ void clearLamps(Runtime& runtime);
 
 uint32_t txSuccessCount(const Runtime& runtime);
 uint32_t txFailureCount(const Runtime& runtime);
+uint32_t dirtyRefreshCount(const Runtime& runtime);
+uint32_t heartbeatRefreshCount(const Runtime& runtime);
+uint32_t txFrameCounter(const Runtime& runtime);
+uint32_t refreshIntervalMs();
+
+uint8_t protocolModel();
+uint8_t protocolVersionMajor();
+uint8_t protocolVersionMinor();
+uint8_t protocolVersionPatch();
+
 uint8_t lampRowMask(const Runtime& runtime, uint8_t row);
 
 }  // namespace protocol

@@ -30,14 +30,19 @@ bool writeLampRegisterBlock(const uint8_t* rowMasks, size_t count) {
 
 void initialize(Runtime& runtime) {
     runtime.lastRefreshMs = 0;
+    runtime.lastTxMs = 0;
     runtime.txSuccessCount = 0;
     runtime.txFailureCount = 0;
+    runtime.dirtyRefreshCount = 0;
+    runtime.heartbeatRefreshCount = 0;
+    runtime.txFrameCounter = 0;
     runtime.dirty = true;
     memset(runtime.lampRowMasks, 0, sizeof(runtime.lampRowMasks));
 }
 
 void begin(Runtime& runtime, uint32_t nowMs) {
     runtime.lastRefreshMs = nowMs;
+    runtime.lastTxMs = nowMs;
     runtime.dirty = true;
 }
 
@@ -46,7 +51,10 @@ void update(Runtime& runtime, uint32_t nowMs, bool matrixLinkHealthy) {
         return;
     }
 
-    if (!runtime.dirty && (nowMs - runtime.lastRefreshMs < CAPTAIN_PROTOCOL_REFRESH_MS)) {
+    const bool dueToDirty = runtime.dirty;
+    const bool dueToHeartbeat = !runtime.dirty && (nowMs - runtime.lastRefreshMs >= CAPTAIN_PROTOCOL_REFRESH_MS);
+
+    if (!dueToDirty && !dueToHeartbeat) {
         return;
     }
 
@@ -55,6 +63,15 @@ void update(Runtime& runtime, uint32_t nowMs, bool matrixLinkHealthy) {
 
     if (ok) {
         runtime.txSuccessCount++;
+        runtime.txFrameCounter++;
+        runtime.lastTxMs = nowMs;
+
+        if (dueToDirty) {
+            runtime.dirtyRefreshCount++;
+        } else {
+            runtime.heartbeatRefreshCount++;
+        }
+
         runtime.dirty = false;
     } else {
         runtime.txFailureCount++;
@@ -88,6 +105,38 @@ uint32_t txSuccessCount(const Runtime& runtime) {
 
 uint32_t txFailureCount(const Runtime& runtime) {
     return runtime.txFailureCount;
+}
+
+uint32_t dirtyRefreshCount(const Runtime& runtime) {
+    return runtime.dirtyRefreshCount;
+}
+
+uint32_t heartbeatRefreshCount(const Runtime& runtime) {
+    return runtime.heartbeatRefreshCount;
+}
+
+uint32_t txFrameCounter(const Runtime& runtime) {
+    return runtime.txFrameCounter;
+}
+
+uint32_t refreshIntervalMs() {
+    return CAPTAIN_PROTOCOL_REFRESH_MS;
+}
+
+uint8_t protocolModel() {
+    return CAPTAIN_PROTOCOL_MODEL_I2C_REGMAP;
+}
+
+uint8_t protocolVersionMajor() {
+    return CAPTAIN_PROTOCOL_VERSION_MAJOR;
+}
+
+uint8_t protocolVersionMinor() {
+    return CAPTAIN_PROTOCOL_VERSION_MINOR;
+}
+
+uint8_t protocolVersionPatch() {
+    return CAPTAIN_PROTOCOL_VERSION_PATCH;
 }
 
 uint8_t lampRowMask(const Runtime& runtime, uint8_t row) {
