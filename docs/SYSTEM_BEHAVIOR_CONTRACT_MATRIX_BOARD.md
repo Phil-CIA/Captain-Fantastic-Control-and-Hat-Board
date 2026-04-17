@@ -249,7 +249,46 @@ Self-test trigger source: [x] Control command  [ ] Local mode pin/switch  [ ] Bo
 
 ---
 
-## VII. Next Steps
+## VII. Round 3 Clarification Questions
+
+### Q11: Lamp Write Atomicity Scope
+Rationale: DECISION 7 says visible updates do not require full-row atomic swap, while Q2 enables shadow buffer + commit. This needs a single v1 rule.
+```
+Lamp update mode in v1: [ ] Immediate per-byte apply  [ ] Shadow buffer + explicit commit required
+If commit is required, max apply latency target: [ ] <= 5 ms  [ ] <= 10 ms  [ ] <= 20 ms
+```
+
+### Q12: Ready vs Degraded Definition
+Rationale: Q7 allows ready=true with degraded warnings while also requiring self-check pass. Define what is non-fatal.
+```
+Allowed while ready=true (non-fatal degraded): [ ] Missing optional telemetry  [ ] One or more stuck switches (operator override active)  [ ] Link warning history only
+Disallowed while ready=true (fatal): [ ] Active lamp driver fault  [ ] Scan engine timing violation  [ ] Register-map CRC/validation failure
+```
+
+### Q13: Counter Persistence Policy
+Rationale: Q9 enables reboot persistence; this needs storage and lifecycle policy to prevent wear and unclear reset semantics.
+```
+Persisted counter write policy: [ ] Every event  [ ] Periodic checkpoint (time-based)  [ ] Periodic checkpoint (delta/event-count based)
+Counter reset authority: [ ] Control command only  [ ] Local service action only  [ ] Both
+```
+
+### Q14: Release Semantics for Gameplay Logic
+Rationale: DECISION 2 disables release transitions, but some game logic may require release detection.
+```
+Release information source in v1: [ ] Not exposed (control infers from bitmap polling)  [ ] Explicit release bitmask register  [ ] Optional service-only release telemetry
+If inferred, minimum control polling period assumption: [ ] <= 10 ms  [ ] <= 20 ms  [ ] <= 50 ms
+```
+
+### Q15: Invalid Write Observability
+Rationale: DECISION 10 disables invalid-write counters, while DECISION 11 latches warnings. Define minimum observability and clear behavior.
+```
+Invalid-write diagnostics in v1: [ ] Latched flag only  [ ] Latched flag + last bad address/value register  [ ] Add counter despite DECISION 10
+Warning clear precondition: [ ] Clear anytime by command  [ ] Clear only when bus idle and no new faults since last read
+```
+
+---
+
+## VIII. Next Steps
 
 Once the decisions above are locked, implementation sequence for matrix board should be:
 1. Register map and version field
@@ -261,7 +300,7 @@ Once the decisions above are locked, implementation sequence for matrix board sh
 
 ---
 
-## VIII. Meta: Document Revision Log
+## IX. Meta: Document Revision Log
 
 | Date | Status | Changes |
 |------|--------|---------|
