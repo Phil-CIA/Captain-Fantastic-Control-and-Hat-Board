@@ -5,6 +5,7 @@
 #include "command_shared.h"
 #include "input_commands.h"
 #include "ota_commands.h"
+#include "service_menu_runtime.h"
 
 namespace captain {
 namespace command {
@@ -17,6 +18,7 @@ constexpr bool CAPTAIN_ENABLE_OUTPUT_TEST = CAPTAIN_ENABLE_OUTPUT_TEST_DEFAULT;
 void pollSerial(captain::ota::Runtime& otaRuntime,
                 captain::audio::Runtime& audioRuntime,
                 captain::matrix::Runtime& matrixRuntime,
+                captain::service::Runtime& serviceRuntime,
                 captain::input::overlay::Runtime& inputOverlayRuntime,
                 captain::ota::StatusCallback otaStatusCallback,
                 captain::ota::StopAudioCallback stopAudioCallback,
@@ -38,6 +40,7 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
         otaRuntime,
         audioRuntime,
         matrixRuntime,
+        serviceRuntime,
         inputOverlayRuntime,
         otaStatusCallback,
         stopAudioCallback,
@@ -45,9 +48,10 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
     };
 
     if (command == "mp3 help") {
-        Serial.println("MP3 commands: mp3 startup | mp3 attract | mp3 start | mp3 bonus | mp3 gameover | mp3 hiscore | mp3 stop | mp3 storage");
+        Serial.println("MP3 commands: mp3 startup | mp3 attract | mp3 start | mp3 bonus | mp3 gameover | mp3 hiscore | mp3 stop | mp3 storage | mp3 volume [0-100]");
         Serial.println("OTA commands: ota help | ota status | ota wifi <ssid> <pass> | ota flash [http-url]");
         Serial.println("Matrix commands: matrix status");
+        Serial.println("Service commands: service help | service menu | service status | service next | service prev | service set <0-100> | service run [switch|coil|audio] | service save | service cancel | service exit");
         Serial.println("Input commands: input status");
         Serial.println("Mode commands: mode");
         return;
@@ -69,6 +73,14 @@ void pollSerial(captain::ota::Runtime& otaRuntime,
                              CAPTAIN_APP_MODE_NAME,
                              CAPTAIN_ENABLE_OUTPUT_TEST ? "Test profile" : "System profile");
         }
+        return;
+    }
+
+    if (captain::service::handleCommand(command,
+                                        commandRaw,
+                                        serviceRuntime,
+                                        audioRuntime,
+                                        oledStatusWriter)) {
         return;
     }
 

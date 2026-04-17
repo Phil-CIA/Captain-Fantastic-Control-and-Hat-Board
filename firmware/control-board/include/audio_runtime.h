@@ -21,6 +21,7 @@ enum class Event {
 
 struct Runtime {
     uint32_t lastAudioDiagnosticMs;
+    float masterGain;
     bool i2sReady;
     bool diagnosticFlip;
     bool internalSpiffsReady;
@@ -42,6 +43,9 @@ void stop(Runtime& runtime);
 bool playEvent(Runtime& runtime, Event event, bool loop);
 void updatePlayback(Runtime& runtime);
 void updateDiagnostic(Runtime& runtime, uint32_t nowMs);
+void setMasterGain(Runtime& runtime, float gain);
+float getMasterGain(const Runtime& runtime);
+bool isStrictAssetNamingMode();
 
 bool isExternalFlashReady(const Runtime& runtime);
 bool isInternalSpiffsReady(const Runtime& runtime);

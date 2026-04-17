@@ -8,6 +8,26 @@ bool handleAudioCommand(const String& command, CommandContext& context) {
         Serial.printf("Audio storage: SPIFFS=%s, W25Q128=%s\n",
                       captain::audio::isInternalSpiffsReady(context.audioRuntime) ? "ready" : "down",
                       captain::audio::isExternalFlashReady(context.audioRuntime) ? "ready" : "down");
+        Serial.printf("Audio policy: strict-canonical-names=%s\n",
+                      captain::audio::isStrictAssetNamingMode() ? "yes" : "no");
+        Serial.printf("Audio gain: %.2f\n", captain::audio::getMasterGain(context.audioRuntime));
+        return true;
+    }
+
+    if (command == "mp3 volume") {
+        Serial.printf("Audio gain: %.2f\n", captain::audio::getMasterGain(context.audioRuntime));
+        return true;
+    }
+
+    if (command.startsWith("mp3 volume ")) {
+        const int percent = command.substring(strlen("mp3 volume ")).toInt();
+        if (percent < 0 || percent > 100) {
+            Serial.println("Audio gain expects 0-100");
+            return true;
+        }
+
+        captain::audio::setMasterGain(context.audioRuntime, static_cast<float>(percent) / 100.0f);
+        Serial.printf("Audio gain set to %d%%\n", percent);
         return true;
     }
 

@@ -18,6 +18,10 @@ namespace {
 
 constexpr float CAPTAIN_AUDIO_MP3_GAIN = 0.12f;
 
+#ifndef CAPTAIN_AUDIO_STRICT_CANONICAL_NAMES
+#define CAPTAIN_AUDIO_STRICT_CANONICAL_NAMES 0
+#endif
+
 class AudioFileSourceSerialFlashCompat : public AudioFileSource {
    public:
     AudioFileSourceSerialFlashCompat() = default;
@@ -114,6 +118,7 @@ class AudioFileSourceSerialFlashCompat : public AudioFileSource {
 struct AudioFileChoice {
     const char* spiffsPath;
     const char* externalName;
+    bool aliasName;
 };
 
 const char* eventName(Event event) {
@@ -137,29 +142,29 @@ const char* eventName(Event event) {
 
 const AudioFileChoice* selectEventMp3(const Runtime& runtime, Event event, bool* fromExternal) {
     static const AudioFileChoice startupFiles[] = {
-        {"/startup.mp3", "startup.mp3"},
-        {"/rocket_man.mp3", "rocket.mp3"},
-        {"/crocodile_rock.mp3", "crock.mp3"}
+        {"/startup.mp3", "startup.mp3", false},
+        {"/rocket_man.mp3", "rocket.mp3", true},
+        {"/crocodile_rock.mp3", "crock.mp3", true}
     };
     static const AudioFileChoice attractFiles[] = {
-        {"/attract.mp3", "attract.mp3"},
-        {"/rocket_man.mp3", "rocket.mp3"}
+        {"/attract.mp3", "attract.mp3", false},
+        {"/rocket_man.mp3", "rocket.mp3", true}
     };
     static const AudioFileChoice gameStartFiles[] = {
-        {"/start.mp3", "start.mp3"},
-        {"/crocodile_rock.mp3", "crock.mp3"}
+        {"/start.mp3", "start.mp3", false},
+        {"/crocodile_rock.mp3", "crock.mp3", true}
     };
     static const AudioFileChoice bonusFiles[] = {
-        {"/bonus.mp3", "bonus.mp3"},
-        {"/crocodile_rock.mp3", "crock.mp3"}
+        {"/bonus.mp3", "bonus.mp3", false},
+        {"/crocodile_rock.mp3", "crock.mp3", true}
     };
     static const AudioFileChoice gameOverFiles[] = {
-        {"/game_over.mp3", "gmovr.mp3"},
-        {"/rocket_man.mp3", "rocket.mp3"}
+        {"/game_over.mp3", "gmovr.mp3", false},
+        {"/rocket_man.mp3", "rocket.mp3", true}
     };
     static const AudioFileChoice highScoreFiles[] = {
-        {"/high_score.mp3", "hiscore.mp3"},
-        {"/rocket_man.mp3", "rocket.mp3"}
+        {"/high_score.mp3", "hiscore.mp3", false},
+        {"/rocket_man.mp3", "rocket.mp3", true}
     };
 
     const AudioFileChoice* candidateFiles = nullptr;
@@ -196,6 +201,10 @@ const AudioFileChoice* selectEventMp3(const Runtime& runtime, Event event, bool*
 
     for (size_t index = 0; index < candidateCount; index++) {
         const AudioFileChoice* candidate = &candidateFiles[index];
+
+        if (CAPTAIN_AUDIO_STRICT_CANONICAL_NAMES && candidate->aliasName) {
+            continue;
+        }
 
         if (runtime.externalFlashReady && SerialFlash.exists(candidate->externalName)) {
             if (fromExternal != nullptr) {
@@ -429,6 +438,7 @@ void writeAudioSilence(Runtime& runtime, uint16_t durationMs) {
 
 void initialize(Runtime& runtime) {
     runtime.lastAudioDiagnosticMs = 0;
+    runtime.masterGain = CAPTAIN_AUDIO_MP3_GAIN;
     runtime.i2sReady = false;
     runtime.diagnosticFlip = false;
     runtime.internalSpiffsReady = false;
@@ -498,7 +508,7 @@ bool playEvent(Runtime& runtime, Event event, bool loop) {
     const int bclkPin = CAPTAIN_AUDIO_SWAP_BCLK_LRCK_FOR_TEST ? CAPTAIN_AUDIO_LRCK_PIN : CAPTAIN_AUDIO_BCLK_PIN;
     const int lrckPin = CAPTAIN_AUDIO_SWAP_BCLK_LRCK_FOR_TEST ? CAPTAIN_AUDIO_BCLK_PIN : CAPTAIN_AUDIO_LRCK_PIN;
     runtime.mp3Output->SetPinout(bclkPin, lrckPin, CAPTAIN_AUDIO_DIN_PIN);
-    runtime.mp3Output->SetGain(CAPTAIN_AUDIO_MP3_GAIN);
+    runtime.mp3Output->SetGain(runtime.masterGain);
 
     if (!runtime.mp3->begin(runtime.mp3File, runtime.mp3Output)) {
         Serial.printf("Audio MP3: failed to start %s for %s\n", selectedName, eventName(event));
@@ -635,6 +645,28 @@ bool isExternalFlashReady(const Runtime& runtime) {
 
 bool isInternalSpiffsReady(const Runtime& runtime) {
     return runtime.internalSpiffsReady;
+}
+
+void setMasterGain(Runtime& runtime, float gain) {
+    if (gain < 0.0f) {
+        gain = 0.0f;
+    }
+    if (gain > 1.0f) {
+        gain = 1.0f;
+    }
+
+    runtime.masterGain = gain;
+    if (runtime.mp3Output != nullptr) {
+        runtime.mp3Output->SetGain(runtime.masterGain);
+    }
+}
+
+float getMasterGain(const Runtime& runtime) {
+    return runtime.masterGain;
+}
+
+bool isStrictAssetNamingMode() {
+    return CAPTAIN_AUDIO_STRICT_CANONICAL_NAMES != 0;
 }
 
 }  // namespace audio

@@ -7,6 +7,7 @@
 #include "input_overlay_runtime.h"
 #include "matrix_interface_runtime.h"
 #include "ota_runtime.h"
+#include "service_menu_runtime.h"
 
 namespace captain {
 namespace command {
@@ -14,6 +15,7 @@ namespace command {
 void pollSerial(captain::ota::Runtime& otaRuntime,
                 captain::audio::Runtime& audioRuntime,
                 captain::matrix::Runtime& matrixRuntime,
+                captain::service::Runtime& serviceRuntime,
                 captain::input::overlay::Runtime& inputOverlayRuntime,
                 captain::ota::StatusCallback otaStatusCallback,
                 captain::ota::StopAudioCallback stopAudioCallback,

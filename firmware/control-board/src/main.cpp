@@ -30,6 +30,7 @@
 #include "matrix_interface_runtime.h"
 #include "ota_config.h"
 #include "ota_runtime.h"
+#include "service_menu_runtime.h"
 #include "solenoid_gpio_config.h"
 
 void stopAudioPlaybackForOtaBridge();
@@ -60,6 +61,7 @@ captain::headbox::Runtime headboxRuntime = {};
 captain::ota::Runtime otaRuntime = {};
 captain::audio::Runtime audioRuntime = {};
 captain::matrix::Runtime matrixRuntime = {};
+captain::service::Runtime serviceRuntime = {};
 captain::input::overlay::Runtime inputOverlayRuntime = {};
 Adafruit_SSD1306 debugOled(CAPTAIN_DEBUG_OLED_WIDTH, CAPTAIN_DEBUG_OLED_HEIGHT, &Wire, CAPTAIN_DEBUG_OLED_RESET_PIN);
 Adafruit_NeoPixel* heartbeatRgb = nullptr;
@@ -465,6 +467,7 @@ void pollSerialAudioCommands() {
     captain::command::pollSerial(otaRuntime,
                                  audioRuntime,
                                  matrixRuntime,
+                                 serviceRuntime,
                                  inputOverlayRuntime,
                                  updateOtaStatus,
                                  ::stopAudioPlaybackForOtaBridge,
@@ -497,6 +500,7 @@ void setup() {
     captain::ota::connectWifiWithTimeout(otaRuntime, 5000U, true, updateOtaStatus);
     captain::audio::initialize(audioRuntime);
     captain::audio::initPath(audioRuntime, CAPTAIN_SERIALFLASH_SPI_HZ);
+    captain::service::initialize(serviceRuntime, captain::audio::getMasterGain(audioRuntime));
 
     Wire.begin(CAPTAIN_I2C_SDA_PIN, CAPTAIN_I2C_SCL_PIN, CAPTAIN_I2C_FREQUENCY_HZ);
     scanI2CBus();
