@@ -791,11 +791,7 @@ The contract is now sufficiently defined to start coding core modules without wa
 
 ## XIII. REMAINING DECISIONS QUEUE
 
-These are the next likely open items after the round 4 answers:
-
-1. Exact serial or packet format for the matrix-board command protocol
-2. Final asset filenames and external-flash directory map
-3. Detailed maintenance menu wording and navigation flow
+Round 5 answers are now locked. No unresolved contract questions remain for v1 bring-up.
 
 ---
 
@@ -805,34 +801,36 @@ These are the next likely open items after the round 4 answers:
 
 **Answer:**
 ```
-Primary matrix payload type: [ ] Debounced bitmap snapshot  [ ] Edge event packet stream  [ ] Hybrid snapshot + change mask
-Include sequence counter in v1 payload: [ ] Yes  [ ] No
-Include per-message CRC in v1 payload: [ ] Yes  [ ] No
-Protocol transport for v1: [ ] I2C register map  [ ] Framed serial  [ ] Other
+Primary matrix payload type: [x] Debounced bitmap snapshot  [ ] Edge event packet stream  [ ] Hybrid snapshot + change mask
+Include sequence counter in v1 payload: [ ] Yes  [x] No
+Include per-message CRC in v1 payload: [ ] Yes  [x] No
+Protocol transport for v1: [x] I2C register map  [ ] Framed serial  [ ] Other
 ```
 
 ### Q32: Audio Asset Naming and Path Contract
 
 **Answer:**
 ```
-Use these canonical attract/start/bonus/game-over/hiscore names in external flash: [ ] Yes  [ ] No
-Keep short alias fallbacks enabled for bring-up compatibility: [ ] Yes  [ ] No
-Require exact filename match before release build: [ ] Yes  [ ] No
+Use these canonical attract/start/bonus/game-over/hiscore names in external flash: [x] Yes  [ ] No
+Keep short alias fallbacks enabled for bring-up compatibility: [x] Yes  [ ] No
+Require exact filename match before release build: [x] Yes  [ ] No
 ```
 
 ### Q33: Maintenance Menu UX and Navigation
 
 **Answer:**
 ```
-Navigation input source for service menu: [ ] SW2 + Start/Tilt  [ ] Serial-only  [ ] Hybrid
-Menu style for v1: [ ] Flat list  [ ] Step-by-step wizard
-Show explicit save/commit prompt on settings changes: [ ] Yes  [ ] No
-Allow direct coil/lamp/audio bench actions in same menu tree: [ ] Yes  [ ] No
+Navigation input source for service menu: [ ] SW2 + Start/Tilt  [ ] Serial-only  [x] Hybrid
+Menu style for v1: [x] Flat list  [ ] Step-by-step wizard
+Show explicit save/commit prompt on settings changes: [x] Yes  [ ] No
+Allow direct coil/lamp/audio bench actions in same menu tree: [x] Yes  [ ] No
 ```
 
-**Reasoning (optional notes):**
+**Reasoning (locked answer):**
 ```
-[Edit here]
+Use the simple, proven I2C register-map path for v1 to match current firmware structure.
+Keep compatibility aliases during bring-up but enforce canonical names for release-quality asset packs.
+Use hybrid service access (switch + serial) and a flat menu with explicit saves to keep bench work fast and operator behavior predictable.
 ```
 
 ---
@@ -869,3 +867,4 @@ With the locked answers above, code can proceed in this sequence:
 | 2026-04-17 | 🟢 Round 3 answers locked | Added display scope, flash audio layout, fault behavior, audit scope, and acceptance criteria |
 | 2026-04-17 | 🟢 Round 4 answers locked | Added bonus acceleration, extra-ball cadence, matrix-interface guidance, NVS write spacing, reboot behavior, operator fault display, and phased coding approval |
 | 2026-04-17 | 🟡 Round 5 questions added | Added lock-in questions for protocol wire format, audio asset naming contract, and maintenance menu navigation |
+| 2026-04-17 | 🟢 Round 5 answers locked | Locked matrix wire format v1, asset naming policy, and maintenance menu navigation defaults |
