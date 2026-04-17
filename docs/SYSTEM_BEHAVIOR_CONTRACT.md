@@ -547,30 +547,148 @@ Factory reset command clears persisted values: [x] Yes  [ ] No
 
 ---
 
-## XI. REMAINING DECISIONS QUEUE
+## XI. ROUND 3 CLARIFICATION ANSWERS — LOCKED
 
-These are still likely next after the newly locked answers above:
+### Q11: Display and Headbox Scope for v1
 
-1. Display or headbox integration scope for v1
-2. Audio asset naming, storage layout, and fallback behavior details
-3. Service-menu depth and bookkeeping detail level
+**Answer:**
+```
+Show scores: [x] Yes
+Show ball count: [x] Yes
+Show game state: [x] Yes
+Show basic maintenance prompts only: [x] Yes
+Add gameplay-heavy animations beyond startup routine: [ ] Yes  [x] No
+OLED required for normal system operation: [ ] Yes  [x] No
+OLED role: [x] Internal status and troubleshooting indicator only
+```
+
+**Reasoning (locked answer):**
+```
+The only planned animation is the startup flashy routine. The OLED is mainly for troubleshooting with the back cover removed, so the machine must operate without depending on it.
+```
+
+### Q12: Board Responsibility and Asset Control
+
+**Answer:**
+```
+Priority order for board roles: [x] Good as written
+Control board is system master: [x] Yes
+Matrix board is slave: [x] Yes
+Keep asset and event policy defined here in the control-board contract: [x] Yes
+Use this document to guide unfinished matrix-board behavior: [x] Yes
+```
+
+**Reasoning (locked answer):**
+```
+The matrix board is still under development, so this contract should continue to define the behavior boundary and serve as a development guide for both boards.
+```
+
+### Q13: Audio Storage Layout
+
+**Answer:**
+```
+Store event audio in external flash: [x] Yes
+Use a fixed simple layout: [x] Yes
+```
+
+### Q14: Audio Failure and Fallback Policy
+
+**Answer:**
+```
+Fallback chain: [x] Event MP3 -> tone fallback -> silence
+Startup should fail hard if attract asset missing: [ ] Yes  [x] No
+Decoder error should latch a fault flag for diagnostics: [x] Yes  [ ] No
+```
+
+### Q15: Operator Menu Scope
+
+**Answer:**
+```
+Include audio volume control: [x] Yes  [ ] No
+Include balls-per-game setting: [ ] Yes  [x] No
+Include free-play or credits setting: [ ] Yes  [x] No
+Include switch-test and coil-test entry points: [x] Yes  [ ] No
+```
+
+### Q16: Audit Counter Scope
+
+**Answer:**
+```
+Track total plays: [x] Yes  [ ] No
+Track total tilt events: [x] Yes  [ ] No
+Track per-switch hit counts: [ ] Yes  [x] No
+Track solenoid fire counts: [ ] Yes  [x] No
+```
+
+### Q17: Link Supervision Timing
+
+**Answer:**
+```
+Heartbeat period: [ ] 50 ms  [ ] 100 ms  [x] 250 ms
+Link-loss timeout: [ ] 250 ms  [ ] 500 ms  [x] 1000 ms
+On link loss, lamps fall to: [ ] All off  [x] Last safe state  [ ] Diagnostic pattern
+```
+
+### Q18: Fault Severity Policy
+
+**Answer:**
+```
+Hard-stop on matrix link loss: [x] Yes  [ ] No
+Hard-stop on audio subsystem failure: [ ] Yes  [x] No
+Hard-stop on persistent stuck switch at boot: [x] Yes  [ ] No
+Auto-clear recoverable faults after condition disappears: [x] Yes  [ ] No
+```
+
+### Q19: First Playable Acceptance Test
+
+**Answer:**
+```
+Must complete full game from START to GAME_OVER: [x] Yes  [ ] No
+Must score correctly for representative switch set: [x] Yes  [ ] No
+Must play attract + start + bonus + game-over audio: [x] Yes  [ ] No
+Must survive power cycle with high score retained: [x] Yes  [ ] No
+```
+
+### Q20: Bench versus Cabinet Mode Split
+
+**Answer:**
+```
+Separate build or profile for bench mode: [ ] Yes  [x] No
+Bench mode may bypass credits and some interlocks: [x] Yes  [ ] No
+Bench mode may expose direct serial commands for lamps, coils, and audio: [x] Yes  [ ] No
+```
+
+**Reasoning (locked answer):**
+```
+Keep one firmware path for now, but allow bench-friendly behavior and direct serial control where useful during bring-up.
+```
 
 ---
 
-## XII. NEXT STEPS
+## XII. REMAINING DECISIONS QUEUE
+
+These are the next likely open items after the round 3 answers:
+
+1. Exact serial or packet format for the matrix-board command protocol
+2. Final asset filenames and external-flash directory map
+3. Detailed maintenance menu wording and navigation flow
+
+---
+
+## XIII. NEXT STEPS
 
 With the locked answers above, code can proceed in this sequence:
 
 1. Audio Module -> Integrate game-state-to-music wiring from the state machine
 2. Scoring Module -> Port the 22-switch scoring matrix from the proven legacy source
-3. Matrix Interface Module -> Apply the matrix-board switch event contract
-4. Driver Safety Module -> Apply solenoid pulse limits and concurrency rules
+3. Matrix Interface Module -> Apply the matrix-board switch event contract and link supervision timing
+4. Driver Safety Module -> Apply solenoid pulse limits, concurrency rules, and hard-stop behavior
 5. Persistence Module -> Store high scores, counters, and service settings with safe write timing
-6. Board Protocol Module -> Implement matrix-board event and lamp-intent messaging with heartbeat timeout handling
+6. Board Protocol Module -> Implement master-slave messaging with heartbeat and last-safe-state behavior
 7. Bonus Module -> Restore countdown logic with the slower 750 ms starting cadence and acceleration trial
-8. Diagnostics Module -> Implement the phased diagnostic path
-9. Audio UI Module -> Add a user-facing volume adjustment path
-10. Integration Test -> Verify state transitions, lamp updates, audio playback, solenoid firing, and maintenance switching
+8. Display and Service Module -> Add score, ball, state, maintenance prompts, and operator volume control
+9. Diagnostics Module -> Implement the phased diagnostic path and boot fault handling
+10. Integration Test -> Verify full playable flow, audio events, retained high score, and maintenance switching
 
 ---
 
@@ -684,5 +802,9 @@ These are the next questions after the current defaults and Round 2 answers. The
 | 2026-04-16 | Persistence and protocol defaults | Added local persistence defaults and the matrix-to-control command contract |
 | 2026-04-16 | Draft+ | Added round 2 clarification questions for implementation details |
 | 2026-04-17 | Locked user answers | Added 5-ball play, tilt policy, bonus cadence tuning, updated solenoid limits, heartbeat timeout, SW2 maintenance-mode semantics, and MVP audio scope |
+<<<<<<< HEAD
 | 2026-04-17 | Draft++ | Added Round 3 clarification questions for interface, assets, service, and acceptance scope |
 | [NEXT] | Locked | [Timestamp when decisions are committed] |
+=======
+| 2026-04-17 | Round 3 answers locked | Added display scope, flash audio layout, fault behavior, audit scope, and acceptance criteria |
+>>>>>>> dd71bad (Lock round-3 system behavior contract answers)
