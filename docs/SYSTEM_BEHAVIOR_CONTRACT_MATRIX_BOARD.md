@@ -1,6 +1,6 @@
 # System Behavior Contract - Captain Fantastic Matrix Board Firmware
 
-Status: Under Definition
+Status: User answers integrated
 Last Updated: 2026-04-17
 Owner: [You]
 
@@ -10,6 +10,24 @@ Design boundary (locked):
 - Matrix board owns switch scanning, debounce, edge/state reporting, and lamp multiplex timing.
 - Control board owns game state, scoring, audio, diagnostics policy, and lamp intent decisions.
 - Matrix board should be deterministic and timing-focused; avoid embedding game rules.
+
+## Recommended v1 Direction (analysis only; not yet locked)
+
+This board should stay simple, deterministic, and easy to debug in the first playable build. The safest recommendation is to prefer stable state reporting over rich event semantics, strict validation over permissive behavior, and safe lamp hold/off behavior over clever recovery.
+
+### Suggested defaults to consider while answering
+- **Interface:** lean toward a register-map-first or hybrid path, expose a protocol version field, and publish a debounced bitmap plus changed-state mask.
+- **Link behavior:** prefer a 250 ms heartbeat target, a ready flag, and holding the last safe lamp state on simple link loss.
+- **Scan/debounce:** start around a 5 ms scan interval and 20 ms debounce window, with one closure report until release.
+- **Noise handling:** suppress duplicates, trust the last stable debounced state, and count noisy/invalid conditions for diagnostics.
+- **Boot policy:** report stuck switches, block ready until the issue is understood or overridden in service mode, and keep the override explicit.
+- **Lamp application:** apply valid writes promptly, refresh from retained intent, and use atomic row/block update behavior to avoid visible glitches.
+- **Diagnostics:** expose fault/status registers, keep counters for timeouts and invalid writes, and reject malformed commands without disturbing the current safe state.
+- **Bench bring-up:** allow direct lamp writes, synthetic switch injection, and a one-shot status dump for early cabinet-free testing.
+- **Round-question bias:** fixed version register, shadow-buffer commit for lamp writes, per-switch bitmask, no runtime debounce tuning in v1, binary lamp on/off only for MVP, and self-test available from both control command and local service access.
+
+### Locked-answer consistency note
+A few answers were marked as uncertain during review. To keep the contract implementable, the document uses these conservative provisional defaults: expose the ready flag to the control board, count non-fatal noise events, allow matrix lamp-walk primitives, use per-switch bitmask if a change mask is later enabled, and keep lamp output binary on/off only for v1.
 
 ---
 
@@ -26,8 +44,8 @@ Options:
 
 Decision:
 ```
-Transport: [ ] A) I2C register map  [ ] B) Framed packet  [ ] C) Hybrid path
-Protocol version field exposed to control board: [ ] Yes  [ ] No
+Transport: [x] A) I2C register map  [ ] B) Framed packet  [ ] C) Hybrid path
+Protocol version field exposed to control board: [x] Yes  [ ] No
 ```
 
 ### DECISION 2: Switch Data Publication Mode
@@ -41,8 +59,8 @@ Options:
 
 Decision:
 ```
-Publication mode: [ ] A) Bitmap  [ ] B) Edge only  [ ] C) Bitmap + change mask
-Include release transitions: [ ] Yes  [ ] No
+Publication mode: [x] A) Bitmap  [ ] B) Edge only  [ ] C) Bitmap + change mask
+Include release transitions: [ ] Yes  [x] No
 ```
 
 ### DECISION 3: Link Supervision Behavior
@@ -51,9 +69,9 @@ Question: What supervision behavior should matrix board implement?
 
 Decision:
 ```
-Heartbeat period target: [ ] 100 ms  [ ] 250 ms  [ ] 500 ms
-Expose ready flag to control board: [ ] Yes  [ ] No
-On control link loss, lamp behavior: [ ] Hold last state  [ ] All off  [ ] Diagnostic pattern
+Heartbeat period target: [ ] 100 ms  [ ] 250 ms  [x] 500 ms
+Expose ready flag to control board: [x] Yes  [ ] No
+On control link loss, lamp behavior: [x] Hold last state  [ ] All off  [ ] Diagnostic pattern
 ```
 
 ---
@@ -66,9 +84,9 @@ Question: What scan/debounce defaults should matrix board enforce?
 
 Decision:
 ```
-Scan interval: [ ] 2 ms  [ ] 5 ms  [ ] 10 ms
-Debounce window: [ ] 10 ms  [ ] 20 ms  [ ] 30 ms
-One report per closure until release: [ ] Yes  [ ] No
+Scan interval: [ ] 2 ms  [ ] 5 ms  [x] 10 ms
+Debounce window: [ ] 10 ms  [x] 20 ms  [ ] 30 ms
+One report per closure until release: [x] Yes  [ ] No
 ```
 
 ### DECISION 5: Conflict and Duplicate Handling
@@ -77,9 +95,9 @@ Question: How should matrix board handle duplicate or noisy transitions?
 
 Decision:
 ```
-Suppress duplicate closure reports while held: [ ] Yes  [ ] No
-If state is ambiguous/noisy, prefer last debounced stable state: [ ] Yes  [ ] No
-Raise non-fatal noise counter for diagnostics: [ ] Yes  [ ] No
+Suppress duplicate closure reports while held: [x] Yes  [ ] No
+If state is ambiguous/noisy, prefer last debounced stable state: [x] Yes  [ ] No
+Raise non-fatal noise counter for diagnostics: [x] Yes  [ ] No
 ```
 
 ### DECISION 6: Boot-Time Switch Health
@@ -88,9 +106,9 @@ Question: What should matrix board do with stuck switches at boot?
 
 Decision:
 ```
-Report stuck switch list to control board: [ ] Yes  [ ] No
-Block ready flag until cleared: [ ] Yes  [ ] No
-Allow operator override command in service mode: [ ] Yes  [ ] No
+Report stuck switch list to control board: [x] Yes  [ ] No
+Block ready flag until cleared: [x] Yes  [ ] No
+Allow operator override command in service mode: [x] Yes  [ ] No
 ```
 
 ---
@@ -103,9 +121,9 @@ Question: How should matrix board apply control-board lamp intents?
 
 Decision:
 ```
-Apply lamp intents immediately on valid write: [ ] Yes  [ ] No
-Also refresh from last intent on heartbeat cadence: [ ] Yes  [ ] No
-Require complete row block write before visible update (atomic swap): [ ] Yes  [ ] No
+Apply lamp intents immediately on valid write: [x] Yes  [ ] No
+Also refresh from last intent on heartbeat cadence: [x] Yes  [ ] No
+Require complete row block write before visible update (atomic swap): [ ] Yes  [x] No
 ```
 
 ### DECISION 8: Safe State Rules
@@ -114,9 +132,9 @@ Question: What safe-state rules should matrix board enforce locally?
 
 Decision:
 ```
-On internal matrix fault, force lamps off: [ ] Yes  [ ] No
-On link timeout, keep last safe lamp state: [ ] Yes  [ ] No
-Expose fault code register for control-board polling: [ ] Yes  [ ] No
+On internal matrix fault, force lamps off: [x] Yes  [ ] No
+On link timeout, keep last safe lamp state: [x] Yes  [ ] No
+Expose fault code register for control-board polling: [x] Yes  [ ] No
 ```
 
 ### DECISION 9: Lamp Test Ownership
@@ -125,9 +143,9 @@ Question: Which board owns low-level lamp walk tests?
 
 Decision:
 ```
-Matrix board provides lamp walk primitive commands: [ ] Yes  [ ] No
-Control board orchestrates test sequences: [ ] Yes  [ ] No
-Allow standalone matrix self-test mode: [ ] Yes  [ ] No
+Matrix board provides lamp walk primitive commands: [x] Yes  [ ] No
+Control board orchestrates test sequences: [x] Yes  [ ] No
+Allow standalone matrix self-test mode: [x] Yes  [ ] No
 ```
 
 ---
@@ -140,10 +158,10 @@ Question: What counters should matrix board maintain for service diagnostics?
 
 Decision:
 ```
-Count switch scan cycles: [ ] Yes  [ ] No
-Count debounce suppressions: [ ] Yes  [ ] No
-Count invalid command frames/register writes: [ ] Yes  [ ] No
-Count link-timeout events: [ ] Yes  [ ] No
+Count switch scan cycles: [ ] Yes  [x] No
+Count debounce suppressions: [x] Yes  [ ] No
+Count invalid command frames/register writes: [ ] Yes  [x] No
+Count link-timeout events: [x] Yes  [ ] No
 ```
 
 ### DECISION 11: Command Validation Strictness
@@ -152,9 +170,9 @@ Question: How strict should matrix board be on malformed writes?
 
 Decision:
 ```
-Reject out-of-range writes and keep prior state: [ ] Yes  [ ] No
-Set a latched warning flag when invalid write occurs: [ ] Yes  [ ] No
-Clear warning flag only by explicit control-board command: [ ] Yes  [ ] No
+Reject out-of-range writes and keep prior state: [x] Yes  [ ] No
+Set a latched warning flag when invalid write occurs: [x] Yes  [ ] No
+Clear warning flag only by explicit control-board command: [x] Yes  [ ] No
 ```
 
 ### DECISION 12: Bench Bring-Up Mode
@@ -163,9 +181,9 @@ Question: What bench features should be available before full cabinet integratio
 
 Decision:
 ```
-Allow direct lamp row/bit writes via debug command path: [ ] Yes  [ ] No
-Allow synthetic switch injection for protocol test: [ ] Yes  [ ] No
-Expose one-shot status dump command: [ ] Yes  [ ] No
+Allow direct lamp row/bit writes via debug command path: [x] Yes  [ ] No
+Allow synthetic switch injection for protocol test: [x] Yes  [ ] No
+Expose one-shot status dump command: [ ] Yes  [x] No
 ```
 
 ---
@@ -174,28 +192,28 @@ Expose one-shot status dump command: [ ] Yes  [ ] No
 
 ### Q1: Register Map Versioning
 ```
-Publish protocol version at fixed register address: [ ] Yes  [ ] No
-Major/minor version split: [ ] Yes  [ ] No
+Publish protocol version at fixed register address: [x] Yes  [ ] No
+Major/minor version split: [ ] Yes  [x] No
 ```
 
 ### Q2: Read/Write Atomicity
 ```
-Require shadow buffer + commit bit for lamp writes: [ ] Yes  [ ] No
+Require shadow buffer + commit bit for lamp writes: [x] Yes  [ ] No
 ```
 
 ### Q3: Change Mask Width
 ```
-Change mask format: [ ] Per-switch bitmask  [ ] Per-row byte mask
+Change mask format: [x] Per-switch bitmask  [ ] Per-row byte mask
 ```
 
 ### Q4: Debounce Tuning Access
 ```
-Allow runtime scan/debounce tuning registers in v1: [ ] Yes  [ ] No
+Allow runtime scan/debounce tuning registers in v1: [ ] Yes  [x] No
 ```
 
 ### Q5: Diagnostic Fault Classes
 ```
-Fault classes exposed: [ ] Link  [ ] Switch stuck  [ ] Lamp driver  [ ] Internal timing
+Fault classes exposed: [x] Link  [x] Switch stuck  [x] Lamp driver  [ ] Internal timing
 ```
 
 ---
@@ -204,29 +222,29 @@ Fault classes exposed: [ ] Link  [ ] Switch stuck  [ ] Lamp driver  [ ] Internal
 
 ### Q6: Link Loss Transition
 ```
-Link-loss timeout source: [ ] Control heartbeat missing  [ ] Matrix watchdog local timer
+Link-loss timeout source: [x] Control heartbeat missing  [ ] Matrix watchdog local timer
 ```
 
 ### Q7: Ready State Contract
 ```
-Ready requires all self-checks passed: [ ] Yes  [ ] No
-Ready can be true during degraded mode with warnings: [ ] Yes  [ ] No
+Ready requires all self-checks passed: [x] Yes  [ ] No
+Ready can be true during degraded mode with warnings: [x] Yes  [ ] No
 ```
 
 ### Q8: Lamp PWM/Brightness
 ```
-Binary on/off only in v1: [ ] Yes  [ ] No
-Include brightness levels in v1: [ ] Yes  [ ] No
+Binary on/off only in v1: [x] Yes  [ ] No
+Include brightness levels in v1: [ ] Yes  [x] No
 ```
 
 ### Q9: Error Counter Persistence
 ```
-Persist counters across reboot: [ ] Yes  [ ] No
+Persist counters across reboot: [x] Yes  [ ] No
 ```
 
 ### Q10: Matrix Self-Test Trigger
 ```
-Self-test trigger source: [ ] Control command  [ ] Local mode pin/switch  [ ] Both
+Self-test trigger source: [x] Control command  [ ] Local mode pin/switch  [ ] Both
 ```
 
 ---
@@ -248,3 +266,5 @@ Once the decisions above are locked, implementation sequence for matrix board sh
 | Date | Status | Changes |
 |------|--------|---------|
 | 2026-04-17 | Draft | Created initial matrix-board contract with iterative decision/question rounds |
+| 2026-04-17 | Guidance added | Added concise recommendation notes for answering the matrix-board decision set |
+| 2026-04-17 | Locked user answers | Integrated the v1 I2C register-map choices, debounce policy, safe-state rules, diagnostics, and round-1/round-2 answers |
