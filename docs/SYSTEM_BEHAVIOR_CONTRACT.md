@@ -12,8 +12,8 @@ This contract now reflects the current multi-board split:
 - the control board owns game state, scoring, audio, diagnostics, display behavior, and high-level output policy
 - the control board should consume debounced events and send high-level lamp intent rather than directly multiplex the lamp or switch matrix
 
-**Status:** Initial defaults selected
-**Last Updated:** 2026-04-16
+**Status:** User answers integrated
+**Last Updated:** 2026-04-17
 **Owner:** [You]
 **Reference Sources:**
 - Captain-Fantastic-home-edition/src/main_firmware.cpp (lines 105-1143: game state machine, scoring, bonus, diagnostics)
@@ -78,6 +78,12 @@ GAME_OVER --[display high score]--> ATTRACT
 | Slingshot Right | 10 | Multiplier advance | Advance slingshot multiplier on hit |
 | Tilt | 0 | Tilt solenoid | End ball immediately, disable flipper, drain ball fast |
 
+### Ball Count and Extra Ball Policy
+- Standard game uses 5 balls
+- Extra ball awards do not decrement the current ball counter
+- When an extra ball is awarded, the player stays on the current ball
+- Software does not cap extra balls in the first pass
+
 ### Extra Ball Awards
 - 100K points -> Extra ball light
 - 200K points -> Extra ball light
@@ -85,7 +91,9 @@ GAME_OVER --[display high score]--> ATTRACT
 
 ### Bonus Pole (Displayed as 1K-19K)
 - Incremented by Rollover switches (each +1K)
-- Counted down at end of ball (1K per 50ms tick = ~20s total countdown)
+- Initial countdown trial: 750 ms per scoring step
+- Play a bonus sound on every step
+- Countdown can accelerate as a tuning trial after the initial slower cadence
 - Multiplied by Return Lane multiplier (1X, 2X, 3X, or 5X)
 
 ---
@@ -232,9 +240,9 @@ Interrupt on Tilt: [x] Yes  [ ] No
 Interrupt on Drain: [x] Yes  [ ] No
 ```
 
-**Reasoning (starting default):**
+**Reasoning (locked answer):**
 ```
-Use attract and event fanfares without continuous in-play background music. This keeps gameplay cues clear while avoiding unnecessary complexity in the first pass.
+Yes to all listed event-triggered audio hooks for the MVP set: attract, start, bonus, and game-over event playback are enabled, while continuous in-play background music stays off for now.
 ```
 
 ---
@@ -311,27 +319,28 @@ The responsiveness target stays the same, but the ownership is now on the matrix
 **Question:** What safety limits should be applied to gameplay solenoids during early bring-up?
 
 **Options:**
-- A) Strict protection: 25 to 30 ms default pulse cap, long cooldown, one coil at a time
-- B) Balanced protection: 35 ms default pulse cap, short retrigger lockout, tune per coil later
+- A) Strict protection: short pulse, single-coil behavior, and conservative lockout
+- B) Balanced protection: 50 ms pulse width, 50 ms cooldown, and up to 2 concurrent coils
 - C) Permissive bring-up: looser software limits for faster experimentation
 
 **Decision:**
 ```
-Pulse cap default: [ ] A) 25 to 30 ms  [x] B) 35 ms  [ ] C) Loose and tune later
-Retrigger lockout: [ ] 50 ms  [x] 125 ms  [ ] Disabled
+Pulse cap default: [ ] A) short  [x] B) 50 ms  [ ] C) Loose and tune later
+Retrigger cooldown: [ ] 125 ms  [x] 50 ms  [ ] Disabled
+Maximum concurrent gameplay coils: [ ] 1  [x] 2  [ ] Unlimited
 Disable on tilt or fault: [x] Yes  [ ] No
 ```
 
-**Reasoning (starting default):**
+**Reasoning (locked answer):**
 ```
-Protect coils first. Conservative software caps reduce the risk of overheating or driver abuse while still allowing realistic bench testing.
+Use the requested 50 ms pulse width, 50 ms cooldown, and 2-coil concurrency as the starting gameplay trial, while still keeping hard fault and tilt suppression enabled.
 ```
 
 **Safety rules:**
-- A solenoid may not re-fire while it is already active
+- A solenoid may not re-fire while it is already active unless the cooldown has elapsed
 - A hard timeout always wins over gameplay requests
 - Tilt or fault states immediately suppress gameplay solenoid firing
-- Per-coil tuning can be added later, but the global safety cap remains in place
+- Per-coil tuning can be added later, but the global protection limits remain in place
 
 ---
 
@@ -352,7 +361,9 @@ These defaults define what the control board remembers and how it exchanges inte
 ```
 Data scope: [ ] A) Minimal  [x] B) Balanced  [ ] C) Full logging
 Storage owner: [x] Control board local nonvolatile storage
-Write timing: [ ] Every event  [x] End-of-ball and settings-change checkpoints  [ ] Manual save only
+Write on every scoring event: [ ] Yes  [x] No
+Write at end of ball: [x] Yes  [ ] No
+Write on settings change: [x] Yes  [ ] No
 Factory reset path: [x] Yes  [ ] No
 ```
 
@@ -382,6 +393,7 @@ Keep the machine useful and serviceable without creating unnecessary flash wear 
 ```
 Interface model: [ ] A) Raw mirror  [x] B) Event and intent split  [ ] C) Autonomous matrix
 Heartbeat or ready status: [ ] Optional  [x] Required
+Heartbeat timeout: [ ] 500 ms  [x] 250 ms  [ ] 100 ms
 Loss-of-link behavior: [x] Fail safe to non-destructive state
 Protocol version field: [x] Yes  [ ] No
 ```
@@ -401,125 +413,164 @@ The matrix board should handle the timing-sensitive work, while the control boar
 
 ---
 
-## IX. REMAINING DECISIONS QUEUE
+## IX. ADDITIONAL LOCKED USER ANSWERS
 
-These are still likely next after the protocol defaults are in place:
+### DECISION 9: Game and Maintenance Switch Definition
+
+**Question:** How is service mode selected on the machine?
+
+**Decision:**
+```
+SW2 function: [x] Game / Maintenance mode select
+Switch type: [x] Maintained slide switch  [ ] Momentary
+Mode interpretation: [x] Follow physical switch position
+```
+
+**Reasoning (locked answer):**
+```
+SW2 is a slide switch for Game versus Maintenance mode. It is not a momentary service button.
+```
+
+---
+
+### DECISION 10: Audio Control and MVP Definition
+
+**Question:** What must the first audio milestone include?
+
+**Decision:**
+```
+Event MP3 playback for MVP: [x] Yes
+Streaming required for MVP: [ ] Yes  [x] No
+User-adjustable volume: [x] Yes
+Persist volume setting: [x] Yes
+```
+
+**Reasoning (locked answer):**
+```
+Definition of done for the first audio pass is local event-driven MP3 playback with no streaming requirement yet, plus a user-facing way to adjust volume.
+```
+
+---
+
+## X. ROUND 2 CLARIFICATION ANSWERS — LOCKED
+
+### Q1: Ball Count and End-of-Game Rules
+
+**Answer:**
+```
+Balls per game: [ ] 3  [x] 5
+Extra ball consumes and still decrements ball counter: [ ] Yes  [x] No
+Max extra balls that can be queued: [ ] 1  [ ] 2  [x] Unlimited
+```
+
+### Q2: Tilt Penalty Policy
+
+**Answer:**
+```
+Forfeit current bonus countdown: [x] Yes  [ ] No
+Immediately mute all music/effects: [x] Yes  [ ] No
+Disable all solenoids except safe-drain path: [x] Yes  [ ] No
+```
+
+### Q3: Bonus Countdown Timing and Audio
+
+**Answer:**
+```
+Bonus step interval: [ ] 50 ms  [ ] 75 ms  [ ] 100 ms  [x] 750 ms starting trial
+Sound pulse on every bonus step: [x] Yes  [ ] No
+Accelerate countdown when remaining bonus <= 5: [x] Yes  [ ] No
+```
+
+### Q4: Switch Input Policy
+
+**Answer:**
+```
+Debounce window: [x] 20 ms  [ ] 30 ms  [ ] 50 ms
+Simultaneous hits in same scan frame score all: [x] Yes  [ ] No
+Re-trigger lockout per switch after hit: [x] 0 ms timed lockout, one event per closure until release
+```
+
+### Q5: Solenoid Safety Constraints
+
+**Answer:**
+```
+Max single pulse width: [ ] 30 ms  [ ] 40 ms  [x] 50 ms
+Minimum cooldown per coil between fires: [x] 50 ms  [ ] 100 ms  [ ] 150 ms
+Global max concurrent coils: [ ] 1  [x] 2
+```
+
+### Q6: Attract-to-Game Audio Transition
+
+**Answer:**
+```
+Start transition on START press: [x] Yes
+Fade attract before start fanfare: [ ] 0  [x] 250  [ ] 500
+Resume attract only when returning to ATTRACT state: [x] Yes  [ ] No
+```
+
+### Q7: Missing Audio File Behavior
+
+**Answer:**
+```
+Fallback to startup tone family for that event: [ ] Yes  [x] No
+Log warning on serial/OLED each miss: [x] Yes  [ ] No
+Suppress repeat warnings after first miss per track: [x] Yes  [ ] No
+```
+
+### Q8: Diagnostic Mode Entry and Exit Contract
+
+**Answer:**
+```
+Hardware mode select: [x] SW2 maintained Game / Maintenance switch
+Momentary test button required: [ ] Yes  [x] No
+Serial command support: [x] Yes
+Exit method: [x] Return SW2 to Game or issue explicit command
+```
+
+### Q9: Score Persistence and Reset Rules
+
+**Answer:**
+```
+Persist high score in NVS or flash: [x] Yes  [ ] No
+Persist operator settings, including volume: [x] Yes  [ ] No
+Factory reset command clears persisted values: [x] Yes  [ ] No
+```
+
+### Q10: MVP Scope Lock for First Implementation Pass
+
+**Answer:**
+```
+[ ] State machine + scoring + no MP3 (tone-only)
+[x] State machine + scoring + event MP3 (no streaming)
+[ ] State machine + scoring + event MP3 + full diagnostics
+```
+
+---
+
+## XI. REMAINING DECISIONS QUEUE
+
+These are still likely next after the newly locked answers above:
 
 1. Display or headbox integration scope for v1
-2. Audio asset format, naming, and fallback behavior
+2. Audio asset naming, storage layout, and fallback behavior details
 3. Service-menu depth and bookkeeping detail level
 
 ---
 
-## X. NEXT STEPS
+## XII. NEXT STEPS
 
-With the starting defaults above, code can proceed in this sequence:
+With the locked answers above, code can proceed in this sequence:
 
 1. Audio Module -> Integrate game-state-to-music wiring from the state machine
 2. Scoring Module -> Port the 22-switch scoring matrix from the proven legacy source
 3. Matrix Interface Module -> Apply the matrix-board switch event contract
-4. Driver Safety Module -> Apply solenoid pulse limits and lockout rules
+4. Driver Safety Module -> Apply solenoid pulse limits and concurrency rules
 5. Persistence Module -> Store high scores, counters, and service settings with safe write timing
-6. Board Protocol Module -> Implement matrix-board event and lamp-intent messaging
-7. Bonus Module -> Restore countdown logic and multiplier behavior
+6. Board Protocol Module -> Implement matrix-board event and lamp-intent messaging with heartbeat timeout handling
+7. Bonus Module -> Restore countdown logic with the slower 750 ms starting cadence and acceleration trial
 8. Diagnostics Module -> Implement the phased diagnostic path
-9. Integration Test -> Verify state transitions, lamp updates, audio playback, and solenoid firing
-
----
-
-## VIII. ROUND 2 CLARIFICATION QUESTIONS (Post-Decision Details)
-
-These are the next implementation-locking questions after Decisions 1-4.
-
-### Q1: Ball Count and End-of-Game Rules
-
-**Question:** How many balls per game and how do extra balls consume?
-
-**Choices:**
-- Balls per game: [ ] 3  [ ] 5
-- Extra ball consumes and still decrements ball counter: [ ] Yes  [ ] No
-- Max extra balls that can be queued: [ ] 1  [ ] 2  [ ] Unlimited
-
-### Q2: Tilt Penalty Policy
-
-**Question:** What exactly happens on TILT during BALL_IN_PLAY?
-
-**Choices:**
-- Forfeit current bonus countdown: [ ] Yes  [ ] No
-- Immediately mute all music/effects: [ ] Yes  [ ] No
-- Disable all solenoids except safe-drain path: [ ] Yes  [ ] No
-
-### Q3: Bonus Countdown Timing and Audio
-
-**Question:** Confirm bonus payout pacing and sound cadence.
-
-**Choices:**
-- Bonus step interval: [ ] 50ms  [ ] 75ms  [ ] 100ms
-- Sound pulse on every bonus step: [ ] Yes  [ ] No
-- Accelerate countdown when remaining bonus <= 5: [ ] Yes  [ ] No
-
-### Q4: Switch Input Policy
-
-**Question:** What debounce/acceptance rules should runtime use?
-
-**Choices:**
-- Debounce window: [ ] 20ms  [ ] 30ms  [ ] 50ms
-- Simultaneous hits in same scan frame score all: [ ] Yes  [ ] No
-- Re-trigger lockout per switch after hit: [ ] 0ms  [ ] 50ms  [ ] 100ms
-
-### Q5: Solenoid Safety Constraints
-
-**Question:** Final safety limits for coil driving?
-
-**Choices:**
-- Max single pulse width: [ ] 30ms  [ ] 40ms  [ ] 50ms
-- Minimum cooldown per coil between fires: [ ] 50ms  [ ] 100ms  [ ] 150ms
-- Global max concurrent coils: [ ] 1  [ ] 2
-
-### Q6: Attract-to-Game Audio Transition
-
-**Question:** How should attract music behave when START is pressed?
-
-**Choices:**
-- Stop attract immediately, then play start fanfare: [ ] Yes  [ ] No
-- Fade attract over N ms before start fanfare: [ ] 0  [ ] 250  [ ] 500
-- Resume attract only when returning to ATTRACT state: [ ] Yes  [ ] No
-
-### Q7: Missing Audio File Behavior
-
-**Question:** What is fallback behavior when a requested track is missing?
-
-**Choices:**
-- Fallback to startup tone family for that event: [ ] Yes  [ ] No
-- Log warning on serial/OLED each miss: [ ] Yes  [ ] No
-- Suppress repeat warnings after first miss per track: [ ] Yes  [ ] No
-
-### Q8: Diagnostic Mode Entry/Exit Contract
-
-**Question:** How do we enter and leave diagnostics on production hardware?
-
-**Choices:**
-- Entry method: [ ] Dedicated test button hold  [ ] Serial command  [ ] Both
-- Hold duration to enter (button): [ ] 1s  [ ] 2s  [ ] 3s
-- Exit method: [ ] Button release  [ ] Timeout  [ ] Explicit command
-
-### Q9: Score Persistence and Reset Rules
-
-**Question:** What values persist across reboot/power cycle?
-
-**Choices:**
-- Persist high score in NVS/flash: [ ] Yes  [ ] No
-- Persist operator settings (volume, diagnostics prefs): [ ] Yes  [ ] No
-- Factory reset command clears persisted values: [ ] Yes  [ ] No
-
-### Q10: MVP Scope Lock for First Implementation Pass
-
-**Question:** Which feature set defines v0.1 done?
-
-**Choices:**
-- [ ] State machine + scoring + no MP3 (tone-only)
-- [ ] State machine + scoring + event MP3 (no streaming)
-- [ ] State machine + scoring + event MP3 + full diagnostics
+9. Audio UI Module -> Add a user-facing volume adjustment path
+10. Integration Test -> Verify state transitions, lamp updates, audio playback, solenoid firing, and maintenance switching
 
 ---
 
@@ -531,5 +582,5 @@ These are the next implementation-locking questions after Decisions 1-4.
 | 2026-04-16 | Initial defaults | Selected the first four starting decisions and added a queue for follow-on decisions |
 | 2026-04-16 | Timing and safety defaults | Added switch debounce, matrix timing, and solenoid safety starting defaults |
 | 2026-04-16 | Persistence and protocol defaults | Added local persistence defaults and the matrix-to-control command contract |
-| 2026-04-16 | Draft+ | Added Round 2 clarification questions for implementation details |
-| [NEXT] | Locked | [Timestamp when decisions are committed] |
+| 2026-04-16 | Draft+ | Added round 2 clarification questions for implementation details |
+| 2026-04-17 | Locked user answers | Added 5-ball play, tilt policy, bonus cadence tuning, updated solenoid limits, heartbeat timeout, SW2 maintenance-mode semantics, and MVP audio scope |
