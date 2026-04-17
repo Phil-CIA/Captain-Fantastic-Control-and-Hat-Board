@@ -665,9 +665,118 @@ Keep one firmware path for now, but allow bench-friendly behavior and direct ser
 
 ---
 
-## XII. REMAINING DECISIONS QUEUE
+## XII. ROUND 4 LOCKED ANSWERS (Bonus, Interface, Persistence, Release)
 
-These are the next likely open items after the round 3 answers:
+### Q21: Bonus Countdown Acceleration
+
+**Answer:**
+```
+Accelerate the bonus countdown when the remaining bonus reaches 5 or less.
+Use a 500 ms step interval once acceleration begins.
+```
+
+**Reasoning (locked answer):**
+```
+This preserves the slow dramatic start while shortening the tail of the count so end-of-ball flow stays snappy.
+```
+
+### Q22: Extra Ball Award Cadence Beyond 300K
+
+**Answer:**
+```
+Award another extra ball every additional 100K after 300K.
+Use one extra-ball indicator state rather than separate lamp semantics per queued award.
+Carry queued extra balls across turns until they are consumed.
+```
+
+**Reasoning (locked answer):**
+```
+This matches the requested generous ruleset while keeping the player-facing indication simple.
+```
+
+### Q23: Matrix Event or State Message Shape
+
+**Answer:**
+```
+Do not lock v1 to a rich timestamped event packet.
+The matrix board may expose a debounced switch-state array, bitmap, or compact changed-state report for the control board to consume.
+Keep the exact wire message format abstracted behind the Matrix Interface module until the board-to-board contract is finalized.
+```
+
+**Reasoning (locked answer):**
+```
+The matrix board is comparatively smart in this design, so the control board should depend on stable debounced state rather than over-assume a specific edge-event schema too early.
+```
+
+### Q24: Duplicate or Out-of-Order Input Handling
+
+**Answer:**
+```
+Treat duplicate reports as harmless and ignore them idempotently.
+If ordering is ambiguous, trust the latest valid debounced state from the matrix board instead of replaying stale transitions.
+Do not hard-fault on occasional duplicate or reordered reports by themselves.
+```
+
+### Q25: Lamp Command Update Cadence
+
+**Answer:**
+```
+Send lamp-intent updates on gameplay or mode changes, and refresh them on the normal board heartbeat.
+Do not require per-scan command spam from the control board.
+```
+
+### Q26: Volume Control User Experience
+
+**Answer:**
+```
+Expose volume adjustment through the Maintenance-mode menu.
+Persist the selected value locally so it survives reboot and power cycling.
+No separate in-game quick-adjust path is required for v1.
+```
+
+### Q27: Nonvolatile Write Protection Policy
+
+**Answer:**
+```
+Apply a minimum 30-second spacing rule for routine bookkeeping writes.
+Immediate writes are still allowed for explicit settings changes and safe end-of-game persistence when justified.
+```
+
+### Q28: Power-Loss Recovery Behavior
+
+**Answer:**
+```
+After any power loss or reboot, the machine returns to ATTRACT.
+Do not attempt to resume a game in progress.
+Only retained settings, audits, and high scores are restored.
+```
+
+### Q29: Fault Display and Operator Feedback
+
+**Answer:**
+```
+Non-fatal faults report on the local OLED and service interface.
+Only fatal or boot-blocking faults should additionally inhibit gameplay or escalate beyond the service display.
+```
+
+### Q30: Release Gate for Coding Start
+
+**Answer:**
+```
+Implementation may begin now in phased form.
+Any still-open interface details should remain tracked as explicit TODO or contract-delta items behind stable module boundaries.
+```
+
+**Reasoning (locked answer):**
+```
+The contract is now sufficiently defined to start coding core modules without waiting for every final protocol detail.
+```
+
+---
+
+## XIII. REMAINING DECISIONS QUEUE
+
+These are the next likely open items after the round 4 answers:
 
 1. Exact serial or packet format for the matrix-board command protocol
 2. Final asset filenames and external-flash directory map
@@ -675,7 +784,7 @@ These are the next likely open items after the round 3 answers:
 
 ---
 
-## XIII. NEXT STEPS
+## XIV. NEXT STEPS
 
 With the locked answers above, code can proceed in this sequence:
 
@@ -692,204 +801,7 @@ With the locked answers above, code can proceed in this sequence:
 
 ---
 
-## XIII. ROUND 3 CLARIFICATION QUESTIONS (Interface, Assets, Service, Acceptance)
-
-These are the next questions after the current defaults and Round 2 answers. They focus on what the first real playable and serviceable build must expose.
-
-### Q11: Display and Headbox Scope for v1
-
-**Question:** What must the control board drive for player-visible display behavior in the first playable build?
-
-**Choices:**
-- Display scope: [ ] Score only  [ ] Score + ball/credits  [ ] Full headbox behavior target
-- Attract display animation required: [ ] Yes  [ ] No
-- Diagnostic text on OLED only, or also on player display: [ ] OLED only  [ ] Both
-
-### Q12: Lamp Intent Priority Rules
-
-**Question:** When multiple game features want the same lamp, what wins?
-
-**Choices:**
-- Priority order: [ ] Diagnostic > Fault > Gameplay > Attract
-- Allow lamp blinking modes from control board intent: [ ] Yes  [ ] No
-- Matrix board may synthesize blink timing locally: [ ] Yes  [ ] No
-
-### Q13: Audio Asset Format and Naming Contract
-
-**Question:** What exact asset rules should firmware assume for local audio files?
-
-**Choices:**
-- Storage location for first pass: [ ] SPIFFS  [ ] External flash only  [ ] Mixed by asset type
-- Naming contract: [ ] Fixed filenames per event  [ ] Playlist/table mapping file
-- Preferred MP3 bitrate target: [ ] 96 kbps  [ ] 128 kbps
-
-### Q14: Audio Fallback Hierarchy
-
-**Question:** If requested event audio is missing or decode fails, what is the exact fallback order?
-
-**Choices:**
-- Fallback chain: [ ] Event MP3 -> tone fallback -> silence
-- Startup should fail hard if attract asset missing: [ ] Yes  [ ] No
-- Decoder error should latch a fault flag for diagnostics: [ ] Yes  [ ] No
-
-### Q15: Service Menu Scope
-
-**Question:** What settings must be adjustable without reflashing firmware?
-
-**Choices:**
-- Include audio volume control: [ ] Yes  [ ] No
-- Include balls-per-game setting: [ ] Yes  [ ] No
-- Include free-play or credits setting: [ ] Yes  [ ] No
-- Include switch-test and coil-test entry points: [ ] Yes  [ ] No
-
-### Q16: Bookkeeping and Audit Detail
-
-**Question:** What counters should be kept in the first persistent audit set?
-
-**Choices:**
-- Track total plays: [ ] Yes  [ ] No
-- Track total tilt events: [ ] Yes  [ ] No
-- Track per-switch hit counts: [ ] Yes  [ ] No
-- Track solenoid fire counts: [ ] Yes  [ ] No
-
-### Q17: Control-to-Matrix Link Timing Contract
-
-**Question:** What heartbeat and timeout rules define link health?
-
-**Choices:**
-- Heartbeat period: [ ] 50 ms  [ ] 100 ms  [ ] 250 ms
-- Link-loss timeout: [ ] 250 ms  [ ] 500 ms  [ ] 1000 ms
-- On link loss, lamps fall to: [ ] All off  [ ] Last safe state  [ ] Diagnostic pattern
-
-### Q18: Fault Model and Recovery
-
-**Question:** Which faults should hard-stop gameplay versus log and continue?
-
-**Choices:**
-- Hard-stop on matrix link loss: [ ] Yes  [ ] No
-- Hard-stop on audio subsystem failure: [ ] Yes  [ ] No
-- Hard-stop on persistent stuck switch at boot: [ ] Yes  [ ] No
-- Auto-clear recoverable faults after condition disappears: [ ] Yes  [ ] No
-
-### Q19: First Playable Acceptance Test
-
-**Question:** What exact checklist defines "first playable" done?
-
-**Choices:**
-- Must complete full game from START to GAME_OVER: [ ] Yes  [ ] No
-- Must score correctly for representative switch set: [ ] Yes  [ ] No
-- Must play attract + start + bonus + game-over audio: [ ] Yes  [ ] No
-- Must survive power cycle with high score retained: [ ] Yes  [ ] No
-
-### Q20: Bench vs Cabinet Mode Split
-
-**Question:** Should early firmware expose a simplified bench mode separate from full cabinet behavior?
-
-**Choices:**
-- Separate build/profile for bench mode: [ ] Yes  [ ] No
-- Bench mode may bypass credits and some interlocks: [ ] Yes  [ ] No
-- Bench mode may expose direct serial commands for lamps/coils/audio: [ ] Yes  [ ] No
-
----
-
-## XIV. ROUND 4 CLARIFICATION QUESTIONS (Calibration, Protocol Details, Operations)
-
-These questions target the remaining implementation details needed to avoid rework during integration and field testing.
-
-### Q21: Bonus Countdown Acceleration Rule
-
-**Question:** You selected a 750 ms starting cadence with acceleration. What exact acceleration rule should be used?
-
-**Choices:**
-- Trigger acceleration when bonus remaining <= [ ] 5  [ ] 3  [ ] 2
-- Accelerated step interval: [ ] 500 ms  [ ] 300 ms  [ ] 200 ms
-- Play audio pulse during accelerated phase: [ ] Yes  [ ] No
-
-### Q22: Extra Ball Awarding Policy Beyond Thresholds
-
-**Question:** How should repeat awards behave after 300K when extra balls are currently uncapped?
-
-**Choices:**
-- Additional award cadence after 300K: [ ] Every +100K  [ ] Every +200K  [ ] None after 300K
-- Allow multiple extra-ball lamps or just one indicator: [ ] Single indicator  [ ] Count indicator
-- Carry extra-ball queue across player turns: [ ] Yes  [ ] No
-
-### Q23: Matrix Event Message Format
-
-**Question:** What minimum payload fields must each matrix-to-control switch event include?
-
-**Choices:**
-- Include switch ID: [ ] Yes
-- Include edge type (press/release): [ ] Yes  [ ] No
-- Include event sequence number: [ ] Yes  [ ] No
-- Include event timestamp (ms tick): [ ] Yes  [ ] No
-
-### Q24: Duplicate and Out-of-Order Event Handling
-
-**Question:** How should control firmware handle duplicate or late switch events?
-
-**Choices:**
-- Drop duplicate sequence numbers: [ ] Yes  [ ] No
-- Accept out-of-order events within small window: [ ] Yes  [ ] No
-- On sequence gap, request resync: [ ] Yes  [ ] No
-
-### Q25: Lamp Command Update Cadence
-
-**Question:** At what rate should control send lamp-intent updates to matrix board?
-
-**Choices:**
-- Update mode: [ ] On change only  [ ] Fixed period  [ ] Hybrid (periodic + on change)
-- If periodic, interval: [ ] 20 ms  [ ] 50 ms  [ ] 100 ms
-- Require explicit ACK from matrix board: [ ] Yes  [ ] No
-
-### Q26: Volume Control UX Path
-
-**Question:** Where should user-adjustable volume be changed for MVP?
-
-**Choices:**
-- Volume control interface: [ ] Serial command  [ ] Maintenance mode menu  [ ] Both
-- Volume scale: [ ] 0-10 integer  [ ] 0-100 percent  [ ] 0.0-1.0 float
-- Apply volume changes immediately during playback: [ ] Yes  [ ] No
-
-### Q27: NVS Write Protection Policy
-
-**Question:** What guardrails should protect flash endurance for persisted settings and scores?
-
-**Choices:**
-- Minimum interval between writes of same key: [ ] 1 s  [ ] 5 s  [ ] 30 s
-- Batch writes for end-of-ball commit: [ ] Yes  [ ] No
-- Keep backup copy with version counter: [ ] Yes  [ ] No
-
-### Q28: Power-Loss Recovery Behavior
-
-**Question:** What should happen if power is lost during BALL_IN_PLAY?
-
-**Choices:**
-- On reboot return to ATTRACT always: [ ] Yes  [ ] No
-- Restore in-progress game state: [ ] Yes  [ ] No
-- Persist only bookkeeping/high-score, not active ball state: [ ] Yes  [ ] No
-
-### Q29: Fault Display and Operator Feedback
-
-**Question:** How should active faults be shown to operator/player in MVP?
-
-**Choices:**
-- Fault output path: [ ] OLED only  [ ] Serial only  [ ] Both
-- Show condensed fault code on player display: [ ] Yes  [ ] No
-- Latch last fault across reboot until cleared: [ ] Yes  [ ] No
-
-### Q30: Release Gate for Coding Start
-
-**Question:** What minimum question completion threshold unlocks full code implementation?
-
-**Choices:**
-- Require all Round 3 answers before coding: [ ] Yes  [ ] No
-- Require all Round 4 answers before coding: [ ] Yes  [ ] No
-- Allow phased coding now with unresolved items tracked as TODO contract deltas: [ ] Yes  [ ] No
-
----
-
-## Meta: Document Revision Log
+## XV. Meta: Document Revision Log
 
 | Date | Status | Changes |
 |------|--------|---------|
@@ -899,10 +811,7 @@ These questions target the remaining implementation details needed to avoid rewo
 | 2026-04-16 | Persistence and protocol defaults | Added local persistence defaults and the matrix-to-control command contract |
 | 2026-04-16 | Draft+ | Added round 2 clarification questions for implementation details |
 | 2026-04-17 | Locked user answers | Added 5-ball play, tilt policy, bonus cadence tuning, updated solenoid limits, heartbeat timeout, SW2 maintenance-mode semantics, and MVP audio scope |
-<<<<<<< HEAD
 | 2026-04-17 | Draft++ | Added Round 3 clarification questions for interface, assets, service, and acceptance scope |
 | 2026-04-17 | Draft+++ | Added Round 4 clarification questions for calibration, protocol details, and operations |
-| [NEXT] | Locked | [Timestamp when decisions are committed] |
-=======
 | 2026-04-17 | Round 3 answers locked | Added display scope, flash audio layout, fault behavior, audit scope, and acceptance criteria |
->>>>>>> dd71bad (Lock round-3 system behavior contract answers)
+| 2026-04-17 | Round 4 answers locked | Added bonus acceleration, extra-ball cadence, matrix-interface guidance, NVS write spacing, reboot behavior, operator fault display, and phased coding approval |
