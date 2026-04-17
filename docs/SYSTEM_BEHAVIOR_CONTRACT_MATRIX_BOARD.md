@@ -288,7 +288,50 @@ Warning clear precondition: [ ] Clear anytime by command  [ ] Clear only when bu
 
 ---
 
-## VIII. Next Steps
+## VIII. Round 4 Clarification Questions
+
+### Q16: Register Map Baseline (v1 addresses)
+Rationale: DECISION 1 and Q1 lock a fixed version register, but v1 integration still needs a concrete baseline map so both boards can compile against identical offsets.
+```
+Publish a frozen v1 register table in this contract: [ ] Yes  [ ] No
+If yes, include explicit addresses for: [ ] Protocol version  [ ] Ready/fault flags  [ ] Switch bitmap  [ ] Change mask (if enabled)  [ ] Lamp write window
+Addressing style: [ ] Byte offsets from base  [ ] 16-bit absolute addresses
+```
+
+### Q17: Heartbeat and Timeout Numeric Contract
+Rationale: DECISION 3 chooses a 500 ms heartbeat target and hold-last behavior, but timeout and recovery thresholds remain undefined.
+```
+Link-loss timeout threshold: [ ] 750 ms  [ ] 1000 ms  [ ] 1500 ms
+Consecutive healthy heartbeats required to clear link-loss state: [ ] 1  [ ] 2  [ ] 3
+When link recovers, lamp state source: [ ] Keep held state until next control write  [ ] Reapply full retained intent immediately
+```
+
+### Q18: Switch Event Ordering and Snapshot Consistency
+Rationale: With bitmap-first publication and optional future change mask, we need one deterministic read-order rule so control logic never mixes epochs.
+```
+Snapshot consistency rule: [ ] Read flags then bitmap latches same epoch  [ ] Read bitmap then flags latches same epoch  [ ] Explicit snapshot-strobe register required
+Change-mask clear behavior (if enabled later): [ ] Clear on read  [ ] Clear on next scan tick  [ ] Clear only on explicit ack write
+```
+
+### Q19: Stuck-Switch Override Safety Envelope
+Rationale: DECISION 6 allows operator override when stuck switches exist, but runtime constraints for that override are not locked.
+```
+Override scope: [ ] Per-switch mask  [ ] Global override
+Override lifetime: [ ] Until power cycle  [ ] Timed expiry  [ ] Until explicit clear
+While override active, service indicator requirement: [ ] Status flag only  [ ] Status flag + periodic log/event pulse
+```
+
+### Q20: Counter Persistence Storage Policy
+Rationale: Q9 enables reboot persistence, and Q13 requests lifecycle policy. We need a concrete storage medium and wear-safe cadence.
+```
+Persistence medium: [ ] NVS/flash  [ ] External EEPROM/FRAM  [ ] RAM only until shutdown command
+Checkpoint cadence target: [ ] Every 30 s  [ ] Every 60 s  [ ] Every 100 counter deltas
+Power-fail tolerance requirement: [ ] Best effort  [ ] Last complete checkpoint guaranteed
+```
+
+---
+
+## IX. Next Steps
 
 Once the decisions above are locked, implementation sequence for matrix board should be:
 1. Register map and version field
@@ -300,7 +343,7 @@ Once the decisions above are locked, implementation sequence for matrix board sh
 
 ---
 
-## IX. Meta: Document Revision Log
+## X. Meta: Document Revision Log
 
 | Date | Status | Changes |
 |------|--------|---------|
