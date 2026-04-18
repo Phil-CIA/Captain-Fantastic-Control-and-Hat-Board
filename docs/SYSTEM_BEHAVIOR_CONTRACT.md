@@ -11,6 +11,7 @@ This contract now reflects the current multi-board split:
 - the matrix board owns switch scanning, debounce, and lamp-drive timing
 - the control board owns game state, scoring, audio, diagnostics, display behavior, and high-level output policy
 - the control board should consume debounced events and send high-level lamp intent rather than directly multiplex the lamp or switch matrix
+- the intended MVP inter-board behavior contract is locked in docs/CONTROL_MATRIX_INTERFACE_V1.md and keeps the simple HT16K33-style peripheral model as the preferred abstraction, even if the matrix firmware changes internally during bring-up
 
 **Status:** User answers integrated
 **Last Updated:** 2026-04-17
@@ -391,24 +392,25 @@ Keep the machine useful and serviceable without creating unnecessary flash wear 
 
 **Decision:**
 ```
-Interface model: [ ] A) Raw mirror  [x] B) Event and intent split  [ ] C) Autonomous matrix
-Heartbeat or ready status: [ ] Optional  [x] Required
-Heartbeat timeout: [ ] 500 ms  [x] 250 ms  [ ] 100 ms
+Interface model: [ ] A) Raw mirror  [x] B) Event and intent split via fixed register map  [ ] C) Autonomous matrix
+Transport in v1: [x] I2C register map at 0x24
+Explicit heartbeat register required in v1: [ ] Yes  [x] No
+Health supervision in v1: [x] Poll switch and diagnostics registers with control-side timeout handling
 Loss-of-link behavior: [x] Fail safe to non-destructive state
-Protocol version field: [x] Yes  [ ] No
+Protocol shape for MVP: [x] Lock to the shared v1 interface document
 ```
 
 **Reasoning (starting default):**
 ```
-The matrix board should handle the timing-sensitive work, while the control board remains the game-logic authority. That keeps responsibilities clear and easier to debug.
+The matrix board should handle the timing-sensitive work, while the control board remains the game-logic authority. For the MVP build, the cleanest alignment is the simpler register-map device already implemented in the matrix firmware rather than a richer future protocol.
 ```
 
 **Default message classes:**
-- matrix board to control board: switch closed or released events, stuck-switch or fault reports, heartbeat or ready status, diagnostics status
-- control board to matrix board: lamp intents, mode changes, diagnostics requests, reset or inhibit commands
+- matrix board to control board: debounced switch snapshot bytes at 0x40..0x43 plus diagnostics/status at 0xF0..0xF3
+- control board to matrix board: global command bytes 0x20, 0x21, 0x80, 0x81, 0xE0..0xEF plus lamp row intent writes at 0x00..0x07
 
 **Lamp contract default:**
-- the control board expresses feature or lamp intent
+- the control board expresses feature or lamp intent as an 8-byte row image
 - the matrix board owns the actual multiplex timing and low-level lamp-drive behavior
 
 ---
@@ -698,9 +700,9 @@ This matches the requested generous ruleset while keeping the player-facing indi
 
 **Answer:**
 ```
-Do not lock v1 to a rich timestamped event packet.
-The matrix board may expose a debounced switch-state array, bitmap, or compact changed-state report for the control board to consume.
-Keep the exact wire message format abstracted behind the Matrix Interface module until the board-to-board contract is finalized.
+Lock v1 to the shared register-map contract in docs/CONTROL_MATRIX_INTERFACE_V1.md.
+Use 8 lamp-row bytes written by the control board, 4 debounced switch bytes read from the matrix board, and 4 diagnostic bytes for status.
+Do not introduce a rich timestamped event packet for the MVP integration pass.
 ```
 
 **Reasoning (locked answer):**

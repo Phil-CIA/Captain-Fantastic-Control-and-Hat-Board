@@ -7,9 +7,9 @@ Owner: [You]
 This contract is the matrix-board companion to the control-board system contract.
 
 **Important v1 alignment note:**
-- the authoritative shared control-to-matrix interface for the current Rev 1 build is defined in docs/CONTROL_MATRIX_INTERFACE_V1.md
-- the up-to-date matrix-board repo reflects a **direct GPIO / shift-register interface** around the local ESP32-C6 firmware, not a live HT16K33-style I2C slave/register model
-- older mentions here of ready registers, commit registers, change masks, or richer message framing should be treated as **archived design exploration / future ideas only** unless later firmware explicitly implements them
+- the authoritative shared control-to-matrix interface for the current Rev 1 direction is defined in docs/CONTROL_MATRIX_INTERFACE_V1.md
+- that contract intentionally preserves a **simple HT16K33-style control model** so the control board sees the matrix board as an appliance, not as something it must micromanage
+- the matrix-board firmware may still use direct GPIO, shift registers, and other local implementation details internally without changing the desired external behavior contract
 
 Design boundary (locked):
 - Matrix board owns switch scanning, debounce, edge/state reporting, and lamp multiplex timing.
@@ -21,19 +21,19 @@ Design boundary (locked):
 This board should stay simple, deterministic, and easy to debug in the first playable build. The safest recommendation is to prefer stable state reporting over rich event semantics, strict validation over permissive behavior, and safe lamp hold/off behavior over clever recovery.
 
 ### Suggested defaults to consider while answering
-- **Interface:** direct 3.3V logic signals for `SR_SCLK`, `SR_LATCH`, `SR_DATA0`, optional `SR_DATA1`, and `SW_COL_0..3` readback.
-- **Data model:** a shifted output pattern for lamp-drive hardware plus raw or locally debounced switch-column logic reads.
-- **Link behavior:** no explicit heartbeat register in the live Rev 1 implementation; health is inferred from normal boot, UART debug activity, and bench-observed signal behavior.
-- **Scan/debounce:** target a 5 ms matrix service loop and a 20 ms debounce window as firmware goals.
+- **Interface:** simple HT16K33-style I2C register map at address `0x24`.
+- **Data model:** 8 lamp-row bytes written by the control board, 4 debounced switch bytes read back, and a small diagnostic/status window.
+- **Link behavior:** keep the wire contract minimal; the control board checks health through successful transactions and basic diagnostics rather than trying to reconfigure matrix internals constantly.
+- **Scan/debounce:** target a 5 ms matrix service loop and a 20 ms debounce window as matrix-firmware responsibilities.
 - **Noise handling:** suppress duplicates and trust the latest stable debounced state.
-- **Lamp application:** keep boot-safe all-off behavior first, then apply intentionally shifted patterns.
-- **Diagnostics:** use simple UART/status visibility and test points during MVP bring-up.
-- **Bench bring-up:** validate logic activity and one-row/one-column behavior before any richer host integration.
+- **Lamp application:** matrix board owns the low-level drive behavior; control sends desired lamp state.
+- **Diagnostics:** keep a simple status snapshot for MVP bring-up.
+- **Bench bring-up:** local firmware scaffolding may differ temporarily, but the intended shared contract remains the simple peripheral model above.
 
 ### Locked-answer consistency note
-The live Rev 1 integration target is intentionally conservative: direct logic signaling, binary lamp behavior, and bench-verifiable switch readback. Any richer remote protocol remains deferred until the ordered hardware is proven on the bench.
+The intended Rev 1 integration target is intentionally conservative: a simple control-side abstraction, binary lamp behavior, and bench-verifiable switch readback. The important decision is the ownership boundary, not the temporary internal wiring used during bring-up.
 
-> Historical note: the detailed decision rounds below preserve earlier protocol exploration. They are useful as design backlog, but they are **not** the current authoritative Rev 1 live interface unless explicitly re-adopted later.
+> Historical note: the detailed decision rounds below preserve protocol exploration and backlog thinking. They remain useful, but the key architectural point is that the matrix board should present a simple stable interface rather than exposing its internal implementation details.
 
 ## Recommended answers for the new question rounds
 

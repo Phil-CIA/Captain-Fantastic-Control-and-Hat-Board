@@ -1,162 +1,213 @@
 # Control ↔ Matrix Board Interface Contract (v1)
 
-**Status:** Locked for current Rev 1 bench-alignment work  
+**Status:** Locked as the intended stable control-to-matrix behavior contract  
 **Last Updated:** 2026-04-18  
-**Purpose:** Define the actual current interface between the control side and the up-to-date matrix-board repo/hardware.
+**Purpose:** Define how the control board should treat the matrix board for MVP integration.
 
-This document supersedes the older idea of an HT16K33-style I2C peripheral at address `0x24`. The current matrix-board repo and ordered Rev 1 hardware use a **direct logic / shift-register control model**, not an implemented I2C register map.
+This document intentionally keeps the **HT16K33-style operating concept** for the split-board system. The point is not to let the control board micromanage matrix timing; the point is to give the control board a simple, durable peripheral model while the matrix-board firmware stays free to change internally whenever needed.
+
+**Important framing:**
+- this is the **preferred inter-board behavior contract**
+- the matrix board may still use local GPIO, shift registers, and bring-up-only firmware details under the hood
+- those local implementation details do **not** require abandoning the simple external HT16K33-style model
 
 ---
 
 ## 1. Board Ownership Boundary
 
-### Control side owns
+### Control board owns
 - game state machine
 - scoring and bonus logic
 - audio behavior
 - diagnostics policy
 - persistence and operator settings
-- high-level lamp intent decisions
+- lamp intent decisions
+- system-level fault handling policy
 
 ### Matrix board owns
-- local lamp-drive hardware execution
-- switch-column sensing
-- scan timing and boot-safe output behavior
-- low-level bring-up diagnostics
+- switch matrix scanning
+- switch debounce and stable-state publication
+- lamp multiplex timing and low-level drive execution
+- boot-safe output behavior
+- local implementation details needed to satisfy the external contract
 
-### Explicit non-goal for current v1
-- the matrix board does **not** presently expose a rich remote command/register API
-
----
-
-## 2. Live Rev 1 Transport Model
-
-- **Interface style:** direct 3.3V logic signals around a `74HC595`-style shift-register path
-- **Matrix controller:** local `ESP32-C6` firmware on the matrix board
-- **Lamp drive architecture:** `2x VNQ7E100AJTR` high-side row drivers plus low-side column sinks
-- **Switch readback architecture:** `LMV393` comparator outputs read as logic-level column signals
-- **Current debug/observability:** UART prints and probe-able test points
-
-For the current repo state there is:
-- **no live I2C slave address**
-- **no fixed register window**
-- **no commit/heartbeat/change-mask protocol**
-- **no framed packet transport requirement**
+### Explicit non-goals for v1
+- the control board does **not** tune scan rate, debounce policy, or row/column service sequencing during normal play
+- the matrix board does **not** own gameplay rules, scoring rules, or feature progression
 
 ---
 
-## 3. External Signal Set
+## 2. Preferred v1 Contract Model
 
-### 3.1 Control signals into the matrix board
+- **Bus:** I2C
+- **Role split:** control board = master, matrix board = slave/peripheral
+- **Preferred slave address:** **0x24**
+- **Wire model:** HT16K33-style command plus register-pointer interface
+- **Master pattern:** write simple global commands directly, write a register pointer then payload for lamp image updates, and read stable switch/diagnostic snapshots by pointer + repeated-start read
 
-| Signal | Direction at matrix board | Voltage | Purpose |
-|---|---|---:|---|
-| `SR_SCLK` | In | 3.3V | shift clock for the serial output path |
-| `SR_LATCH` | In | 3.3V | latch/strobe for applying shifted output data |
-| `SR_DATA0` | In | 3.3V | primary serial data line |
-| `SR_DATA1` | In (optional) | 3.3V | optional second serial data line |
-| `SR_OE_N` | In (recommended spare) | 3.3V | optional active-low global output enable |
-| `UART_RX` | In (optional) | 3.3V | bring-up/debug serial input |
-| `EN/RESET` | In (optional) | 3.3V | reset or enable control |
+### Implementation-freedom note
+The matrix firmware is free to implement this behavior using whatever internal method is most practical, including local GPIO control, shift-register expansion, local scan loops, or later firmware refactors. That internal method is **not** the control-board contract.
 
-### 3.2 Signals provided back from the matrix board
-
-| Signal | Direction at matrix board | Voltage | Purpose |
-|---|---|---:|---|
-| `SW_COL_0` | Out | 3.3V | switch-column readback |
-| `SW_COL_1` | Out | 3.3V | switch-column readback |
-| `SW_COL_2` | Out | 3.3V | switch-column readback |
-| `SW_COL_3` | Out | 3.3V | switch-column readback |
-| `UART_TX` | Out (optional) | 3.3V | bring-up/debug serial output |
-
-### 3.3 Shared rails / references
-
-- `+3V3_LOGIC`
-- `+5V_SW` (local or provided, depending on the final harness choice)
-- `GND`
-- lamp supply rail per the matrix-board power-entry design
+There is **no required framed packet protocol** in current v1.
 
 ---
 
-## 4. Lamp-Control Model
+## 3. Canonical v1 Data Structures
 
-### 4.1 Physical matrix shape
-- **8 lamp rows**
-- **4 lamp columns**
-- rows are driven high-side
-- columns are sunk low-side
+### 3.1 Lamp image written by control board
 
-### 4.2 Current control behavior
-- the current firmware shifts a **16-bit output pattern** to the attached output-expansion hardware
-- the new state becomes visible when the latch line is pulsed
-- the repo's bring-up scaffold currently walks a test bit pattern to validate wiring and output sequencing
+```c
+uint8_t lampRows[8];
+```
 
-### 4.3 Important mapping note
-The exact bit-to-row/column assignment should be treated as a **bench-confirmed pinmap item**, not a presumed protocol constant. The current repo explicitly notes that bit order may need adjustment to match the schematic/harness.
+- register window: **0x00..0x07**
+- one byte per row
+- lower **4 bits** are active lamp columns for that row
+- upper 4 bits are reserved and must be written as 0
+- the matrix board retains the last valid lamp image until it is overwritten or outputs are disabled
 
----
+### 3.2 Switch snapshot read by control board
 
-## 5. Switch-Read Model
+```c
+uint8_t switchBytes[4];
+```
 
-- the matrix board presently uses **4 logic-level switch-column outputs** (`SW_COL_0..3`)
-- the current bring-up firmware samples them directly with GPIO reads
-- there is **no packed byte snapshot published over I2C** in the live Rev 1 implementation
-- if a control-side companion directly monitors these lines during bench work, polling every **10 to 20 ms** is still a reasonable target
-- release and edge interpretation are currently inferred from successive logic samples unless and until a richer protocol is added later
+- register window: **0x40..0x43**
+- packed representation of the **8 x 4** switch matrix
+- each bit represents the latest debounced stable state for one switch position
+- **bit value 1 = switch closed / active**
+- control logic should compare the newest snapshot against the previous snapshot to detect new closures
 
----
+### 3.3 Diagnostic snapshot
 
-## 6. Safe-State and Timing Expectations
+```c
+typedef struct {
+  uint8_t statusFlags;
+  uint8_t pulseLevel;
+  uint8_t lampSample;
+  uint8_t switchSample;
+} MatrixDiagV1;
+```
 
-### Safe state
-- outputs should default to **all off** at boot
-- no lamp should flash unintentionally before firmware has initialized the output path
-- `/OE` and `/MR` boot behavior remain important hardware bring-up checks
+- register window: **0xF0..0xF3**
+- current agreed meanings:
+  - **0xF0** = status flags
+    - bit 0 = system enabled
+    - bit 1 = output enabled
+    - bit 2 = test override active
+    - bit 3 = auto-walk active
+  - **0xF1** = current pulse-width level, 0..15
+  - **0xF2** = live echo/sample of lamp row 0
+  - **0xF3** = live echo/sample of switch byte 0
 
-### Timing
-- the present bring-up firmware uses a slow visible walking-pattern cadence for validation
-- the longer-term implementation target remains roughly a **5 ms** service cadence with about **20 ms** debounce behavior once the firmware matures
-- these are current design targets, not yet a separate remote bus contract
+### 3.4 Matrix-local runtime state
 
----
-
-## 7. Diagnostics and Bring-Up Visibility
-
-Current Rev 1 visibility is intentionally simple:
-- UART debug text from the local `ESP32-C6`
-- direct probing of `SR_SCLK`, `SR_LATCH`, `SR_DATA0`, `SW_COL_0..3`, and the main rails
-- one-row / one-column supervised lamp validation before full matrix stress testing
-
-Structured diagnostic registers, fault bytes, and heartbeat flags are **future ideas only** unless later firmware explicitly implements them.
-
----
-
-## 8. Not Part of the Live Rev 1 Contract
-
-The following items should **not** be assumed implemented today:
-- I2C address `0x24`
-- register windows such as `0x00..0x07`, `0x40..0x43`, or `0xF0..0xF3`
-- command bytes such as `0x20`, `0x21`, `0x80`, `0x81`, or `0xE0..0xEF`
-- explicit ready registers, commit registers, or event FIFOs
-- mandatory per-lamp brightness/PWM wire protocol
+The matrix board keeps these as internal state variables:
+- system enabled or disabled
+- output enabled or disabled
+- lamp pulse-width level, 0..15
+- latest retained lamp-row image
+- latest debounced switch snapshot
 
 ---
 
-## 9. Recommended Bring-Up / Integration Order
+## 4. Minimal v1 Instruction Set
 
-1. verify `3.3V`, `5V`, lamp supply, and ground behavior on the matrix board
-2. confirm the `ESP32-C6` boots and emits expected debug output
-3. probe `SR_SCLK`, `SR_LATCH`, and `SR_DATA0` while the bring-up firmware runs
-4. confirm outputs remain off until intentionally driven
-5. actuate known switches and verify `SW_COL_0..3` logic behavior and polarity
-6. lock the real row/column mapping after bench confirmation
-7. only after that, decide whether a future higher-level host protocol is still needed
+### 4.1 Global command bytes
+
+| Command | Meaning | Expected effect |
+|--------:|---------|-----------------|
+| **0x20** | System disable | stop active matrix service behavior and force safe inactive state |
+| **0x21** | System enable | enable normal matrix scanning and runtime operation |
+| **0x80** | Output disable | disable lamp outputs while keeping configuration state |
+| **0x81** | Output enable | allow lamp output using the retained lamp image |
+| **0xE0..0xEF** | Set pulse-width level | update the global lamp pulse-width level using the low nibble |
+
+### 4.2 Register windows
+
+| Address range | Direction | Meaning |
+|--------------|-----------|---------|
+| **0x00..0x07** | write | lamp row image |
+| **0x40..0x43** | read | switch snapshot bytes |
+| **0xF0..0xF3** | read | diagnostics/status |
+
+### 4.3 v1 transaction rules
+
+- lamp updates are sent as a block write beginning at **0x00**
+- switch reads are done as a block read beginning at **0x40**
+- diagnostics reads are done beginning at **0xF0**
+- there is **no commit register** in current v1
+- there is **no explicit ready/heartbeat register** in current v1
+- there is **no change-mask or event FIFO** in current v1
+- the control board sends **intent**, not low-level scan-engine configuration
+
+---
+
+## 5. Timing Contract
+
+### Matrix board internal timing
+- main service loop target: **5 ms**
+- scan/debounce target: **20 ms** stable debounce window
+- one gameplay closure should only be reported once until that switch is released again
+- lamp application latency target after a valid write: **within the next normal scan cycle**
+
+### Control board polling and update timing
+- switch polling target during active play: **every 10 to 20 ms**
+- diagnostic polling target: **every 100 to 250 ms**, or on fault suspicion
+- lamp writes: **on gameplay or mode changes**, with optional periodic refresh at **100 to 250 ms**
+- control board should **not** spam lamp writes every matrix scan cycle
+
+### Link supervision rule for MVP
+- v1 uses **transaction success and diagnostics readability** as the health check
+- if the control board cannot complete successful matrix transactions for about **1000 ms**, it should treat the matrix link as failed
+- on link failure, the machine should fall back to the existing safe policy: inhibit gameplay continuation and avoid destructive output behavior
+
+---
+
+## 6. Control-Side Interpretation Rules
+
+- the control board treats the **latest valid debounced switch snapshot** as authoritative
+- duplicate or repeated reads of the same active bit are harmless and ignored idempotently
+- release events do not need a separate wire-level event message in v1; they are inferred by comparing successive snapshots
+- scoring logic fires from **new closures**, not from a held switch remaining active across multiple polls
+
+---
+
+## 7. Safe-State Rules
+
+- if system is disabled, the matrix board must not actively drive the lamp matrix
+- if output is disabled, lamp outputs remain off even if lamp row RAM is nonzero
+- invalid or unsupported future protocol ideas must not disturb the last known safe runtime state in v1
+- the matrix board remains timing-focused and should avoid embedding higher-level game logic
+
+---
+
+## 8. Current Bench-Implementation Note
+
+The up-to-date matrix-board repo may still use direct local firmware routines, GPIO activity, and shift-register hardware during bring-up. That is acceptable and expected during bench validation.
+
+The important architectural point is this:
+- **implementation can evolve freely**
+- **the control-side contract should stay simple**
+- **HT16K33-style behavior is still the preferred abstraction**
+
+---
+
+## 9. Recommended Bring-Up / Alignment Order
+
+1. verify safe power-up and boot behavior on the matrix board
+2. validate the local scan/multiplex firmware on the bench
+3. align the shared firmware to the agreed `0x24` behavior contract
+4. write known patterns into **0x00..0x07** and verify lamp mapping
+5. read **0x40..0x43** while actuating switches and confirm closures map correctly
+6. read **0xF0..0xF3** and confirm status and pulse level
+7. tune row/column polarity or mapping only after the contract above is verified
 
 ---
 
 ## 10. Lock Summary
 
-For the current real Rev 1 matrix-board implementation:
-- **interface = direct logic signals for shift-register control plus 4 switch-column readback lines**
-- **local controller = ESP32-C6 with UART-oriented bring-up diagnostics**
-- **older I2C register-map ideas are deferred and must not be treated as already implemented**
+For the preferred first aligned split-board firmware:
+- **behavior contract = HT16K33-style I2C peripheral model**
+- **control board responsibility = send lamp intent and read stable switch/diagnostic state**
+- **matrix board responsibility = own the low-level implementation and timing details**
