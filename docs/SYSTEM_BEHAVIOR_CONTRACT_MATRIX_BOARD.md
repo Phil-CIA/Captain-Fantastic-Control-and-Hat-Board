@@ -1,10 +1,15 @@
 # System Behavior Contract - Captain Fantastic Matrix Board Firmware
 
-Status: User answers integrated
-Last Updated: 2026-04-17
+Status: User answers integrated with Rev 1 interface clarification
+Last Updated: 2026-04-18
 Owner: [You]
 
 This contract is the matrix-board companion to the control-board system contract.
+
+**Important v1 alignment note:**
+- the authoritative shared control-to-matrix interface for the current Rev 1 build is defined in docs/CONTROL_MATRIX_INTERFACE_V1.md
+- the up-to-date matrix-board repo reflects a **direct GPIO / shift-register interface** around the local ESP32-C6 firmware, not a live HT16K33-style I2C slave/register model
+- older mentions here of ready registers, commit registers, change masks, or richer message framing should be treated as **archived design exploration / future ideas only** unless later firmware explicitly implements them
 
 Design boundary (locked):
 - Matrix board owns switch scanning, debounce, edge/state reporting, and lamp multiplex timing.
@@ -16,18 +21,19 @@ Design boundary (locked):
 This board should stay simple, deterministic, and easy to debug in the first playable build. The safest recommendation is to prefer stable state reporting over rich event semantics, strict validation over permissive behavior, and safe lamp hold/off behavior over clever recovery.
 
 ### Suggested defaults to consider while answering
-- **Interface:** lean toward a register-map-first or hybrid path, expose a protocol version field, and publish a debounced bitmap plus changed-state mask.
-- **Link behavior:** prefer a 250 ms heartbeat target, a ready flag, and holding the last safe lamp state on simple link loss.
-- **Scan/debounce:** start around a 5 ms scan interval and 20 ms debounce window, with one closure report until release.
-- **Noise handling:** suppress duplicates, trust the last stable debounced state, and count noisy/invalid conditions for diagnostics.
-- **Boot policy:** report stuck switches, block ready until the issue is understood or overridden in service mode, and keep the override explicit.
-- **Lamp application:** apply valid writes promptly, refresh from retained intent, and use atomic row/block update behavior to avoid visible glitches.
-- **Diagnostics:** expose fault/status registers, keep counters for timeouts and invalid writes, and reject malformed commands without disturbing the current safe state.
-- **Bench bring-up:** allow direct lamp writes, synthetic switch injection, and a one-shot status dump for early cabinet-free testing.
-- **Round-question bias:** fixed version register, shadow-buffer commit for lamp writes, per-switch bitmask, no runtime debounce tuning in v1, binary lamp on/off only for MVP, and self-test available from both control command and local service access.
+- **Interface:** direct 3.3V logic signals for `SR_SCLK`, `SR_LATCH`, `SR_DATA0`, optional `SR_DATA1`, and `SW_COL_0..3` readback.
+- **Data model:** a shifted output pattern for lamp-drive hardware plus raw or locally debounced switch-column logic reads.
+- **Link behavior:** no explicit heartbeat register in the live Rev 1 implementation; health is inferred from normal boot, UART debug activity, and bench-observed signal behavior.
+- **Scan/debounce:** target a 5 ms matrix service loop and a 20 ms debounce window as firmware goals.
+- **Noise handling:** suppress duplicates and trust the latest stable debounced state.
+- **Lamp application:** keep boot-safe all-off behavior first, then apply intentionally shifted patterns.
+- **Diagnostics:** use simple UART/status visibility and test points during MVP bring-up.
+- **Bench bring-up:** validate logic activity and one-row/one-column behavior before any richer host integration.
 
 ### Locked-answer consistency note
-A few answers were marked as uncertain during review. To keep the contract implementable, the document uses these conservative provisional defaults: expose the ready flag to the control board, count non-fatal noise events, allow matrix lamp-walk primitives, use per-switch bitmask if a change mask is later enabled, and keep lamp output binary on/off only for v1.
+The live Rev 1 integration target is intentionally conservative: direct logic signaling, binary lamp behavior, and bench-verifiable switch readback. Any richer remote protocol remains deferred until the ordered hardware is proven on the bench.
+
+> Historical note: the detailed decision rounds below preserve earlier protocol exploration. They are useful as design backlog, but they are **not** the current authoritative Rev 1 live interface unless explicitly re-adopted later.
 
 ## Recommended answers for the new question rounds
 
@@ -84,8 +90,8 @@ Question: What supervision behavior should matrix board implement?
 
 Decision:
 ```
-Heartbeat period target: [ ] 100 ms  [ ] 250 ms  [x] 500 ms
-Expose ready flag to control board: [x] Yes  [ ] No
+Explicit heartbeat register in v1: [ ] Yes  [x] No
+Expose health through diagnostic/status bytes: [x] Yes  [ ] No
 On control link loss, lamp behavior: [x] Hold last state  [ ] All off  [ ] Diagnostic pattern
 ```
 
@@ -99,7 +105,7 @@ Question: What scan/debounce defaults should matrix board enforce?
 
 Decision:
 ```
-Scan interval: [ ] 2 ms  [ ] 5 ms  [x] 10 ms
+Scan interval: [ ] 2 ms  [x] 5 ms  [ ] 10 ms
 Debounce window: [ ] 10 ms  [x] 20 ms  [ ] 30 ms
 One report per closure until release: [x] Yes  [ ] No
 ```
