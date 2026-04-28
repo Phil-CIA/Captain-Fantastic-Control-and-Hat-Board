@@ -2,6 +2,13 @@
 .pio/
 .vscode/
 
+# Python
+__pycache__/
+*.pyc
+
+# Generated logs
+build_log.txt
+
 # KiCad local / temp files
 *-bak
 *.kicad_prl
