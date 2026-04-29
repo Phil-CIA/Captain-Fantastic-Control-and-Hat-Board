@@ -43,3 +43,28 @@
 ## Open follow-up items
 - Separate test-only command surface from system profile command surface.
 - Add dedicated audio content review doc (event -> file mapping, gain, loop policy, fallback behavior).
+
+## Daily update - 2026-04-29
+
+### Firmware identity and traceability
+- Added firmware identity line at boot with version, build ID, checksum signature, and compile timestamp.
+- Build ID now comes from PlatformIO environment and UNIX time.
+- Serial confirmation captured on hardware:
+	- `FW: control-board | build=captain_control_test-1777487289 | sig=17D9D395 | built=Apr 29 2026 ...`
+
+### Upload/port reliability updates
+- Confirmed `COM4` upload path for matrix/display board using `display_board` environment.
+- Confirmed `COM5` upload path for control board.
+- Added manual-boot-safe upload flags in `platformio.ini` (`--before no_reset`, `--after hard_reset`).
+
+### Logging quality improvements
+- Added per-switch debounce suppression and per-window rate limiting for matrix switch logs.
+- Added compact 5-second summary line with logged/suppressed totals and top noisy switch.
+
+### Output-test behavior update
+- In TEST profile, output exercise now runs even when matrix link is degraded.
+- Verified runtime output cycling on control board (`S2`..`S6`) via serial monitor.
+
+### Tomorrow focus
+- Connect 5V solenoid-LED supply and validate commanded playfield-light behavior from control board.
+- Keep 26V rail disconnected during initial morning tests.

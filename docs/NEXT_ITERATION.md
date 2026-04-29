@@ -30,3 +30,4 @@ This file is the parking lot for the control-board and HAT-board redesign.
 - 2026-04-12: Rev 1 PCB order placed.
 - 2026-04-12: Rev 1 BOM/parts order placed.
 - 2026-04-12: next operational step moved to receive/inspect/assemble and follow `docs/REV1_POWERUP_ON_ARRIVAL.md`.
+- 2026-04-29: control-board firmware now emits build identity (`FW/build/sig/built`), serial switch logging is throttled/summarized, and TEST profile output cycling (`S2..S6`) was validated on COM5 for 5V bench proof-of-life.

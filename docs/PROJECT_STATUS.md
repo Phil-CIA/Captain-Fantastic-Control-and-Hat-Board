@@ -39,3 +39,20 @@ This repo tracks the **Captain Fantastic base control board** and its companion 
 - should the next revision keep the split **base board + HAT board** architecture, or fold more back into one board?
 - is the best short-term solenoid workaround a `Vgs` clamp / gate-drive adjustment, or bypassing the on-board driver during development?
 - what supporting firmware or connector documentation should move into this repo later?
+
+## Firmware and bench checkpoint (2026-04-29)
+### Confirmed this session
+- Matrix/display board firmware upload on `COM4` completed successfully (`display_board` env).
+- Control-board firmware upload on `COM5` completed successfully with serial boot confirmation.
+- Firmware self-identification is now in boot logs:
+	- `FW: <name> | build=<id> | sig=<hex> | built=<date time>`
+- PlatformIO environment configuration now carries firmware ID macros and manual-boot-safe upload flags.
+- Control-board switch logging now has suppression/rate-limiting summaries to reduce serial spam.
+- TEST profile output exercise was validated on hardware with repeated output-test lines (`S2`..`S6`).
+
+### Current practical state
+- Control board can be flashed in either profile:
+	- `captain_control_system` for normal integration behavior.
+	- `captain_control_test` for active output cycling/bench proof-of-life.
+- Matrix link can remain degraded while still running output test in TEST profile.
+- Tomorrow's bench focus is to connect 5V for solenoid LEDs and validate playfield-light control path from control board.

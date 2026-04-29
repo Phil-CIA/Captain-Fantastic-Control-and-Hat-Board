@@ -41,6 +41,14 @@ namespace {
 #define CAPTAIN_SERIALFLASH_SPI_HZ 8000000
 #endif
 
+#ifndef CAPTAIN_FW_VERSION
+#define CAPTAIN_FW_VERSION "control-board"
+#endif
+
+#ifndef CAPTAIN_FW_BUILD_ID
+#define CAPTAIN_FW_BUILD_ID "manual"
+#endif
+
 constexpr uint8_t HEARTBEAT_RGB_PIN = 15;
 constexpr uint8_t HEARTBEAT_RGB_PIXELS = 1;
 constexpr uint32_t HEARTBEAT_INTERVAL_MS = 500;
@@ -48,6 +56,11 @@ constexpr uint32_t DISPLAY_INTERVAL_MS = 250;
 constexpr uint32_t INPUT_POLL_MS = 20;
 constexpr uint32_t OUTPUT_TEST_INTERVAL_MS = 750;
 constexpr uint32_t MATRIX_DEGRADED_WARN_INTERVAL_MS = 15000;
+constexpr uint32_t MATRIX_SWITCH_LOG_DEBOUNCE_MS = 700;
+constexpr uint32_t MATRIX_SWITCH_LOG_REPORT_MS = 5000;
+constexpr uint32_t MATRIX_SWITCH_LOG_MAX_PER_REPORT = 20;
+constexpr uint8_t MATRIX_ROWS = 8;
+constexpr uint8_t MATRIX_COLS = 4;
 constexpr float CAPTAIN_AUDIO_MP3_GAIN = 0.12f;
 
 // System vs test behavior is selected by CAPTAIN_APP_MODE_TEST build flag.
@@ -58,9 +71,15 @@ uint32_t lastHeartbeatMs = 0;
 uint32_t lastDisplayMs = 0;
 uint32_t lastOutputTestMs = 0;
 uint32_t lastMatrixDegradedWarnMs = 0;
+uint32_t lastMatrixSwitchSuppressedReportMs = 0;
 uint32_t displayCounter = 0;
+uint32_t matrixSwitchSuppressedCount = 0;
+uint32_t matrixSwitchRateLimitedCount = 0;
+uint32_t matrixSwitchLoggedCount = 0;
 int8_t activeOutput = -1;
 bool matrixLinkHealthyLast = false;
+uint32_t matrixSwitchLastLoggedMs[MATRIX_ROWS][MATRIX_COLS] = {};
+uint16_t matrixSwitchSuppressedByCell[MATRIX_ROWS][MATRIX_COLS] = {};
 captain::headbox::Runtime headboxRuntime = {};
 captain::ota::Runtime otaRuntime = {};
 captain::audio::Runtime audioRuntime = {};
@@ -78,6 +97,19 @@ void updateOtaStatus(const char* line1, const char* line2, const char* line3);
 void updateOnboardDisplayForOtaStatus(const char* line1, const char* line2, const char* line3);
 void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs);
 void updateMatrixDiagnostics(uint32_t nowMs);
+
+uint32_t fnv1a32(const char* text) {
+    uint32_t hash = 2166136261UL;
+    if (text == nullptr) {
+        return hash;
+    }
+    for (const char* p = text; *p != '\0'; ++p) {
+        hash ^= static_cast<uint8_t>(*p);
+        hash *= 16777619UL;
+    }
+    return hash;
+}
+
 int8_t parsePercentFromStatusText(const char* text) {
     if (text == nullptr) {
         return -1;
@@ -370,8 +402,16 @@ void configureOutputsSafe() {
 }
 
 void printBringupBanner() {
+    const uint32_t fwChecksum = fnv1a32(CAPTAIN_FW_BUILD_ID);
+
     Serial.println();
     Serial.println("Captain Fantastic control-board bring-up");
+    Serial.printf("FW: %s | build=%s | sig=%08lX | built=%s %s\n",
+                  CAPTAIN_FW_VERSION,
+                  CAPTAIN_FW_BUILD_ID,
+                  static_cast<unsigned long>(fwChecksum),
+                  __DATE__,
+                  __TIME__);
     Serial.printf("Profile: %s\n", CAPTAIN_APP_MODE_NAME);
     Serial.println("Mode: 5 V-only firmware development");
     Serial.println("Note: keep the real 26 V solenoid rail disconnected");
@@ -429,7 +469,7 @@ void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
         return;
     }
 
-    if (!matrixLinkHealthy) {
+    if (!matrixLinkHealthy && !CAPTAIN_APP_MODE_IS_TEST) {
         if (activeOutput >= 0) {
             digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], LOW);
             activeOutput = -1;
@@ -457,11 +497,29 @@ void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
 }
 
 void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs) {
-    (void)nowMs;
-
     if (!closed) {
         return;
     }
+
+    if (row >= MATRIX_ROWS || col >= MATRIX_COLS) {
+        return;
+    }
+
+    const uint32_t lastLogged = matrixSwitchLastLoggedMs[row][col];
+    if (lastLogged != 0 && (nowMs - lastLogged) < MATRIX_SWITCH_LOG_DEBOUNCE_MS) {
+        matrixSwitchSuppressedCount++;
+        matrixSwitchSuppressedByCell[row][col]++;
+        return;
+    }
+
+    if (matrixSwitchLoggedCount >= MATRIX_SWITCH_LOG_MAX_PER_REPORT) {
+        matrixSwitchRateLimitedCount++;
+        matrixSwitchSuppressedByCell[row][col]++;
+        return;
+    }
+
+    matrixSwitchLastLoggedMs[row][col] = nowMs;
+    matrixSwitchLoggedCount++;
 
     Serial.printf("Matrix switch closed R%uC%u -> %s\n",
                   static_cast<unsigned>(row),
@@ -471,6 +529,52 @@ void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs) {
 
 void updateMatrixDiagnostics(uint32_t nowMs) {
     const bool linkHealthy = captain::matrix::isLinkHealthy(matrixRuntime);
+
+    if ((nowMs - lastMatrixSwitchSuppressedReportMs) >= MATRIX_SWITCH_LOG_REPORT_MS) {
+        lastMatrixSwitchSuppressedReportMs = nowMs;
+
+        uint8_t topRow = 0;
+        uint8_t topCol = 0;
+        uint16_t topSuppressed = 0;
+        for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+            for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                const uint16_t value = matrixSwitchSuppressedByCell[row][col];
+                if (value > topSuppressed) {
+                    topSuppressed = value;
+                    topRow = row;
+                    topCol = col;
+                }
+                matrixSwitchSuppressedByCell[row][col] = 0;
+            }
+        }
+
+        const uint32_t suppressedTotal = matrixSwitchSuppressedCount + matrixSwitchRateLimitedCount;
+        if (matrixSwitchLoggedCount > 0 || suppressedTotal > 0) {
+            if (topSuppressed > 0) {
+                Serial.printf(
+                    "Matrix switch activity 5s: logged=%lu suppressed=%lu (debounce=%lu rate=%lu) top=R%uC%u %s x%u\n",
+                    static_cast<unsigned long>(matrixSwitchLoggedCount),
+                    static_cast<unsigned long>(suppressedTotal),
+                    static_cast<unsigned long>(matrixSwitchSuppressedCount),
+                    static_cast<unsigned long>(matrixSwitchRateLimitedCount),
+                    static_cast<unsigned>(topRow),
+                    static_cast<unsigned>(topCol),
+                    captainSwitchName(topRow, topCol),
+                    static_cast<unsigned>(topSuppressed));
+            } else {
+                Serial.printf(
+                    "Matrix switch activity 5s: logged=%lu suppressed=%lu (debounce=%lu rate=%lu)\n",
+                    static_cast<unsigned long>(matrixSwitchLoggedCount),
+                    static_cast<unsigned long>(suppressedTotal),
+                    static_cast<unsigned long>(matrixSwitchSuppressedCount),
+                    static_cast<unsigned long>(matrixSwitchRateLimitedCount));
+            }
+        }
+
+        matrixSwitchLoggedCount = 0;
+        matrixSwitchSuppressedCount = 0;
+        matrixSwitchRateLimitedCount = 0;
+    }
 
     if (linkHealthy != matrixLinkHealthyLast) {
         if (linkHealthy) {
