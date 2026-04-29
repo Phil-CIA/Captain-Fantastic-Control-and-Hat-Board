@@ -39,7 +39,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Convert a JLC-style BOM CSV or LCSC quotation XLS into Digi-Key candidate and upload files."
     )
-    parser.add_argument("input_csv", type=Path, help="Path to the JLC BOM CSV or LCSC quotation XLS file.")
+    parser.add_argument(
+        "input_csv",
+        type=Path,
+        help="Path to the JLC BOM CSV or LCSC quotation XLS file.",
+    )
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -109,8 +113,12 @@ def load_cross_reference_table(
                 manufacturer=normalize_text(row.get("Manufacturer", "")),
                 manufacturer_pn=normalize_text(row.get("Manufacturer_PN", "")),
                 digikey_pn=normalize_text(row.get("DigiKey_PN", "")),
-                onshore_preferred_pn=normalize_text(row.get("Onshore_Preferred_PN", "")),
-                onshore_preferred_supplier=normalize_text(row.get("Onshore_Preferred_Supplier", "")),
+                onshore_preferred_pn=normalize_text(
+                    row.get("Onshore_Preferred_PN", "")
+                ),
+                onshore_preferred_supplier=normalize_text(
+                    row.get("Onshore_Preferred_Supplier", "")
+                ),
                 preferred_status=normalize_text(row.get("Preferred_Status", "")),
                 notes=normalize_text(row.get("Notes", "")),
             )
@@ -288,7 +296,9 @@ def is_passive_candidate(value: str, footprint: str) -> bool:
     prefix, _ = classify_footprint(footprint)
     if prefix in {"R", "C"}:
         return True
-    return bool(re.search(r"(?:ohm|uf|nf|pf|μf|µf|f)$", normalize_value(value), re.IGNORECASE))
+    return bool(
+        re.search(r"(?:ohm|uf|nf|pf|μf|µf|f)$", normalize_value(value), re.IGNORECASE)
+    )
 
 
 def is_probable_manufacturer_part(part_number: str) -> bool:
@@ -381,7 +391,12 @@ def preferred_digikey_pn(entry: CrossReferenceEntry | None) -> str:
         return entry.digikey_pn
 
     supplier = entry.onshore_preferred_supplier.lower()
-    if entry.onshore_preferred_pn and supplier in {"", "digikey", "digi-key", "digi key"}:
+    if entry.onshore_preferred_pn and supplier in {
+        "",
+        "digikey",
+        "digi-key",
+        "digi key",
+    }:
         return entry.onshore_preferred_pn
     return ""
 
@@ -421,7 +436,12 @@ def digikey_candidate_row(
     status = "Manual_Review"
     notes = ""
 
-    if is_lcsc_quote_source(row) and matched_status.lower() == "exact matches" and manufacturer and manufacturer_part:
+    if (
+        is_lcsc_quote_source(row)
+        and matched_status.lower() == "exact matches"
+        and manufacturer
+        and manufacturer_part
+    ):
         if is_passive_candidate(value, footprint):
             commodity_spec = build_commodity_spec(value, footprint, manufacturer_part)
         status = "Auto"
@@ -451,7 +471,8 @@ def digikey_candidate_row(
             status = "Auto"
         notes = append_note(
             notes,
-            cross_reference_entry.notes or f"Cross-reference match via {cross_reference_match}.",
+            cross_reference_entry.notes
+            or f"Cross-reference match via {cross_reference_match}.",
         )
 
     output_row = {
@@ -465,8 +486,12 @@ def digikey_candidate_row(
         "Description": build_description(row, commodity_spec),
         "Commodity_Spec": commodity_spec,
         "Source_LCSC": lcsc,
-        "Preferred_Onshore_PN": cross_reference_entry.onshore_preferred_pn if cross_reference_entry else "",
-        "Preferred_Onshore_Supplier": cross_reference_entry.onshore_preferred_supplier if cross_reference_entry else "",
+        "Preferred_Onshore_PN": cross_reference_entry.onshore_preferred_pn
+        if cross_reference_entry
+        else "",
+        "Preferred_Onshore_Supplier": cross_reference_entry.onshore_preferred_supplier
+        if cross_reference_entry
+        else "",
         "Cross_Reference_Match": cross_reference_match,
         "Status": status,
         "Notes": notes,
@@ -483,8 +508,12 @@ def digikey_candidate_row(
             "Manufacturer_PN": manufacturer_part,
             "Commodity_Spec": commodity_spec,
             "Source_LCSC": lcsc,
-            "Preferred_Onshore_PN": cross_reference_entry.onshore_preferred_pn if cross_reference_entry else "",
-            "Preferred_Onshore_Supplier": cross_reference_entry.onshore_preferred_supplier if cross_reference_entry else "",
+            "Preferred_Onshore_PN": cross_reference_entry.onshore_preferred_pn
+            if cross_reference_entry
+            else "",
+            "Preferred_Onshore_Supplier": cross_reference_entry.onshore_preferred_supplier
+            if cross_reference_entry
+            else "",
             "Cross_Reference_Match": cross_reference_match,
             "Status": status,
             "Notes": notes,
@@ -537,7 +566,9 @@ def read_lcsc_quote_rows(input_xls: Path) -> Iterable[dict[str, str]]:
         }
 
 
-def write_csv(path: Path, fieldnames: list[str], rows: Iterable[dict[str, str]]) -> None:
+def write_csv(
+    path: Path, fieldnames: list[str], rows: Iterable[dict[str, str]]
+) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
@@ -551,11 +582,11 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     lookup = load_lookup_table(args.lookup_csv)
-    project_cross_reference_by_lcsc, project_cross_reference_by_manufacturer_pn = load_cross_reference_table(
-        args.cross_reference_csv
+    project_cross_reference_by_lcsc, project_cross_reference_by_manufacturer_pn = (
+        load_cross_reference_table(args.cross_reference_csv)
     )
-    master_cross_reference_by_lcsc, master_cross_reference_by_manufacturer_pn = load_cross_reference_table(
-        args.master_cross_reference_csv
+    master_cross_reference_by_lcsc, master_cross_reference_by_manufacturer_pn = (
+        load_cross_reference_table(args.master_cross_reference_csv)
     )
     converted_rows: list[dict[str, str]] = []
     unresolved_rows: list[dict[str, str]] = []
@@ -598,7 +629,8 @@ def main() -> int:
                 )
                 simple_upload_rows.append(
                     {
-                        "Manufacturer Part Number": converted_row["Manufacturer_PN"] or requested_part_number,
+                        "Manufacturer Part Number": converted_row["Manufacturer_PN"]
+                        or requested_part_number,
                         "Quantity": converted_row["Qty"],
                         "Manufacturer Name": converted_row["Manufacturer"],
                     }

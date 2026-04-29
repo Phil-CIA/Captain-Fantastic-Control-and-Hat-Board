@@ -3,13 +3,16 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
-from io import TextIOWrapper
 from pathlib import Path
-from typing import Iterable
 
 import openpyxl
 
-from build_cross_reference_sheet import CrossReferenceRow, dedupe_rows, read_quote_rows, safe_int
+from build_cross_reference_sheet import (
+    CrossReferenceRow,
+    dedupe_rows,
+    read_quote_rows,
+    safe_int,
+)
 from jlc_to_digikey_bom import exclude_from_bom, normalize_text, parse_quantity
 
 
@@ -80,13 +83,23 @@ def read_csv_bom_rows(input_csv: Path) -> list[CrossReferenceRow]:
                     if exclude_from_bom(row):
                         continue
 
-                    lcsc_pn = normalize_text(row.get("LCSC", "") or row.get("LCSC#", ""))
-                    manufacturer = normalize_text(row.get("Manufacturer", "") or row.get("MANUFACTURER", ""))
-                    manufacturer_pn = normalize_text(
-                        row.get("Manufacturer_Part_Number", "") or row.get("Part", "") or row.get("Manufacturer_PN", "")
+                    lcsc_pn = normalize_text(
+                        row.get("LCSC", "") or row.get("LCSC#", "")
                     )
-                    value = normalize_text(row.get("Value", "") or row.get("Description", ""))
-                    footprint = normalize_text(row.get("Footprint", "") or row.get("Package", ""))
+                    manufacturer = normalize_text(
+                        row.get("Manufacturer", "") or row.get("MANUFACTURER", "")
+                    )
+                    manufacturer_pn = normalize_text(
+                        row.get("Manufacturer_Part_Number", "")
+                        or row.get("Part", "")
+                        or row.get("Manufacturer_PN", "")
+                    )
+                    value = normalize_text(
+                        row.get("Value", "") or row.get("Description", "")
+                    )
+                    footprint = normalize_text(
+                        row.get("Footprint", "") or row.get("Package", "")
+                    )
 
                     if not any((lcsc_pn, manufacturer, manufacturer_pn, value)):
                         continue
@@ -110,10 +123,14 @@ def read_csv_bom_rows(input_csv: Path) -> list[CrossReferenceRow]:
         except UnicodeDecodeError:
             continue
 
-    raise UnicodeDecodeError("batch-csv", b"", 0, 1, f"Could not decode CSV file {input_csv}")
+    raise UnicodeDecodeError(
+        "batch-csv", b"", 0, 1, f"Could not decode CSV file {input_csv}"
+    )
 
 
-def find_header_row_xlsx(sheet: openpyxl.worksheet.worksheet.Worksheet) -> tuple[int, list[str]]:
+def find_header_row_xlsx(
+    sheet: openpyxl.worksheet.worksheet.Worksheet,
+) -> tuple[int, list[str]]:
     for row_index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
         values = [normalize_text(cell) for cell in row]
         if "Matched status" in values and "Product Link" in values:
@@ -193,7 +210,10 @@ def merge_source_files(rows: list[CrossReferenceRow]) -> list[CrossReferenceRow]
             replacement = row
         elif not existing.product_link and row.product_link:
             replacement = row
-        elif existing.matched_status == "From_Project_BOM" and row.matched_status != "From_Project_BOM":
+        elif (
+            existing.matched_status == "From_Project_BOM"
+            and row.matched_status != "From_Project_BOM"
+        ):
             replacement = row
         merged[key] = replacement
 
@@ -273,9 +293,13 @@ def main() -> int:
     args = parse_args()
     sources = find_input_files(args.input_path)
     if not sources:
-        raise SystemExit(f"No supported BOM or workbook files found under {args.input_path}")
+        raise SystemExit(
+            f"No supported BOM or workbook files found under {args.input_path}"
+        )
 
-    default_output_root = args.input_path if args.input_path.is_dir() else args.input_path.parent
+    default_output_root = (
+        args.input_path if args.input_path.is_dir() else args.input_path.parent
+    )
     output_csv = args.output_csv or (default_output_root / "master_cross_reference.csv")
 
     all_rows: list[CrossReferenceRow] = []

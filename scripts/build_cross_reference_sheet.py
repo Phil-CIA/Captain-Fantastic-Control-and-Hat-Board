@@ -33,7 +33,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build a reusable LCSC-to-onshore cross-reference sheet from an LCSC quotation workbook."
     )
-    parser.add_argument("input_xls", type=Path, help="Path to an LCSC export_project_*.xls quotation workbook.")
+    parser.add_argument(
+        "input_xls",
+        type=Path,
+        help="Path to an LCSC export_project_*.xls quotation workbook.",
+    )
     parser.add_argument(
         "--output-csv",
         type=Path,
@@ -166,7 +170,9 @@ def write_cross_reference(output_csv: Path, rows: list[CrossReferenceRow]) -> No
 def main() -> int:
     args = parse_args()
     input_xls = args.input_xls
-    output_csv = args.output_csv or input_xls.with_name(f"{input_xls.stem}_Cross_Reference.csv")
+    output_csv = args.output_csv or input_xls.with_name(
+        f"{input_xls.stem}_Cross_Reference.csv"
+    )
 
     rows = read_quote_rows(input_xls)
     deduped_rows = dedupe_rows(rows)

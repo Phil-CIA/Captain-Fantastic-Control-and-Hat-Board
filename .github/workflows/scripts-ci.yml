@@ -1,0 +1,40 @@
+name: Scripts CI
+
+on:
+  push:
+    paths:
+      - "scripts/**"
+      - ".github/workflows/scripts-ci.yml"
+  pull_request:
+    paths:
+      - "scripts/**"
+      - ".github/workflows/scripts-ci.yml"
+
+jobs:
+  lint-and-test:
+    name: Lint and test Python scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: scripts
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint with ruff
+        working-directory: scripts
+        run: ruff check .
+
+      - name: Check formatting with ruff
+        working-directory: scripts
+        run: ruff format --check .
+
+      - name: Run tests
+        working-directory: scripts
+        run: pytest tests/ -v

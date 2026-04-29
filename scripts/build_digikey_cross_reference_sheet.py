@@ -56,7 +56,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build a Digi-Key-history-seeded cross-reference sheet from a standard Digi-Key order CSV export."
     )
-    parser.add_argument("input_csv", type=Path, help="Path to a Digi-Key order CSV export.")
+    parser.add_argument(
+        "input_csv", type=Path, help="Path to a Digi-Key order CSV export."
+    )
     parser.add_argument(
         "--output-csv",
         type=Path,
@@ -73,7 +75,14 @@ def find_column_map(fieldnames: list[str] | None) -> dict[str, str]:
     mapping: dict[str, str] = {}
 
     for target, candidates in REQUIRED_COLUMNS.items():
-        source_name = next((available[candidate] for candidate in candidates if candidate in available), None)
+        source_name = next(
+            (
+                available[candidate]
+                for candidate in candidates
+                if candidate in available
+            ),
+            None,
+        )
         if source_name is None:
             joined = ", ".join(candidates)
             raise ValueError(f"Could not find required Digi-Key column: {joined}")
@@ -134,7 +143,9 @@ def build_seed_rows(input_csv: Path) -> list[DigiKeySeedRow]:
             quantity = parse_int(row.get(column_map["quantity"], ""))
             unit_price = parse_currency(row.get(column_map["unit_price"], ""))
             extended_price = parse_currency(row.get(column_map["extended_price"], ""))
-            customer_reference = normalize_text(row.get(column_map["customer_reference"], ""))
+            customer_reference = normalize_text(
+                row.get(column_map["customer_reference"], "")
+            )
             line_index = normalize_text(row.get(column_map["index"], ""))
 
             if not any((manufacturer_pn, digikey_pn, description)):
@@ -144,7 +155,9 @@ def build_seed_rows(input_csv: Path) -> list[DigiKeySeedRow]:
             status = "Seeded_From_DigiKey_History" if manufacturer_pn else "Missing_MPN"
             package = extract_package(description)
             value_or_spec = extract_value_or_spec(description)
-            line_note = "Derived from Digi-Key history using the standard order CSV shape."
+            line_note = (
+                "Derived from Digi-Key history using the standard order CSV shape."
+            )
             if not manufacturer_pn:
                 line_note = "Missing manufacturer part number in Digi-Key history; review before using as a stable key."
 
@@ -166,19 +179,25 @@ def build_seed_rows(input_csv: Path) -> list[DigiKeySeedRow]:
                     preferred_onshore=digikey_pn,
                     internal_pn="",
                     status=status,
-                    notes=line_note if not line_index else f"{line_note} Source line index: {line_index}.",
+                    notes=line_note
+                    if not line_index
+                    else f"{line_note} Source line index: {line_index}.",
                     source_file=input_csv.name,
                 )
                 continue
 
-            references = {part for part in existing.customer_references.split(" | ") if part}
+            references = {
+                part for part in existing.customer_references.split(" | ") if part
+            }
             if customer_reference:
                 references.add(customer_reference)
 
             existing.last_order_qty = quantity or existing.last_order_qty
             existing.total_purchased_qty_ytd += quantity
             existing.last_unit_price_usd = unit_price or existing.last_unit_price_usd
-            existing.last_extended_price_usd = extended_price or existing.last_extended_price_usd
+            existing.last_extended_price_usd = (
+                extended_price or existing.last_extended_price_usd
+            )
             existing.order_count += 1
             existing.customer_references = " | ".join(sorted(references))
             existing.preferred_onshore = existing.preferred_onshore or digikey_pn
@@ -186,9 +205,7 @@ def build_seed_rows(input_csv: Path) -> list[DigiKeySeedRow]:
             existing.value_or_spec = existing.value_or_spec or value_or_spec
             if existing.status != status:
                 existing.status = "Missing_MPN"
-            existing.notes = (
-                "Merged multiple Digi-Key history rows for the same stable key; latest row in file retained for last-price fields."
-            )
+            existing.notes = "Merged multiple Digi-Key history rows for the same stable key; latest row in file retained for last-price fields."
 
     return sorted(
         deduped.values(),
@@ -257,7 +274,9 @@ def write_cross_reference(output_csv: Path, rows: list[DigiKeySeedRow]) -> None:
 def main() -> int:
     args = parse_args()
     input_csv = args.input_csv
-    output_csv = args.output_csv or input_csv.with_name(f"{safe_stem(input_csv)}_DigiKey_Cross_Reference.csv")
+    output_csv = args.output_csv or input_csv.with_name(
+        f"{safe_stem(input_csv)}_DigiKey_Cross_Reference.csv"
+    )
 
     rows = build_seed_rows(input_csv)
     write_cross_reference(output_csv, rows)

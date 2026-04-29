@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -77,7 +76,9 @@ def aggregate_commodity_specs(csv_files: list[Path]) -> dict[str, CommodityAggre
             if not commodity_spec:
                 continue
 
-            aggregate = aggregates.setdefault(commodity_spec, CommodityAggregate(commodity_spec=commodity_spec))
+            aggregate = aggregates.setdefault(
+                commodity_spec, CommodityAggregate(commodity_spec=commodity_spec)
+            )
             aggregate.total_quantity += parse_quantity(row)
             aggregate.source_boms.add(str(csv_path))
             aggregate.bom_count = len(aggregate.source_boms)
@@ -96,9 +97,14 @@ def aggregate_commodity_specs(csv_files: list[Path]) -> dict[str, CommodityAggre
     return aggregates
 
 
-def write_candidates(output_csv: Path, aggregates: dict[str, CommodityAggregate]) -> None:
+def write_candidates(
+    output_csv: Path, aggregates: dict[str, CommodityAggregate]
+) -> None:
     output_csv.parent.mkdir(parents=True, exist_ok=True)
-    rows = sorted(aggregates.values(), key=lambda item: (-item.bom_count, -item.total_quantity, item.commodity_spec))
+    rows = sorted(
+        aggregates.values(),
+        key=lambda item: (-item.bom_count, -item.total_quantity, item.commodity_spec),
+    )
 
     with output_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(
@@ -142,7 +148,9 @@ def main() -> int:
     if not csv_files:
         raise SystemExit(f"No CSV files found under {args.input_path}")
 
-    default_output = args.input_path if args.input_path.is_dir() else args.input_path.parent
+    default_output = (
+        args.input_path if args.input_path.is_dir() else args.input_path.parent
+    )
     output_csv = args.output_csv or (default_output / "commodity_lookup_candidates.csv")
 
     aggregates = aggregate_commodity_specs(csv_files)
