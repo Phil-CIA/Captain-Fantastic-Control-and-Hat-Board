@@ -56,11 +56,15 @@ constexpr uint32_t DISPLAY_INTERVAL_MS = 250;
 constexpr uint32_t INPUT_POLL_MS = 20;
 constexpr uint32_t OUTPUT_TEST_INTERVAL_MS = 750;
 constexpr uint32_t MATRIX_DEGRADED_WARN_INTERVAL_MS = 15000;
+constexpr uint32_t MATRIX_OLED_STATUS_INTERVAL_MS = 3000;
 constexpr uint32_t MATRIX_SWITCH_LOG_DEBOUNCE_MS = 700;
 constexpr uint32_t MATRIX_SWITCH_LOG_REPORT_MS = 5000;
 constexpr uint32_t MATRIX_SWITCH_LOG_MAX_PER_REPORT = 20;
 constexpr uint8_t MATRIX_ROWS = 8;
 constexpr uint8_t MATRIX_COLS = 4;
+constexpr uint8_t MATRIX_LAMP_TEST_COUNT = 5;
+constexpr uint8_t MATRIX_LAMP_TEST_ROWS[MATRIX_LAMP_TEST_COUNT] = {0, 1, 2, 3, 4};
+constexpr uint8_t MATRIX_LAMP_TEST_COL = 1;
 constexpr float CAPTAIN_AUDIO_MP3_GAIN = 0.12f;
 
 // System vs test behavior is selected by CAPTAIN_APP_MODE_TEST build flag.
@@ -71,12 +75,14 @@ uint32_t lastHeartbeatMs = 0;
 uint32_t lastDisplayMs = 0;
 uint32_t lastOutputTestMs = 0;
 uint32_t lastMatrixDegradedWarnMs = 0;
+uint32_t lastMatrixOledStatusMs = 0;
 uint32_t lastMatrixSwitchSuppressedReportMs = 0;
 uint32_t displayCounter = 0;
 uint32_t matrixSwitchSuppressedCount = 0;
 uint32_t matrixSwitchRateLimitedCount = 0;
 uint32_t matrixSwitchLoggedCount = 0;
 int8_t activeOutput = -1;
+bool matrixLampBlinkOn = false;
 bool matrixLinkHealthyLast = false;
 uint32_t matrixSwitchLastLoggedMs[MATRIX_ROWS][MATRIX_COLS] = {};
 uint16_t matrixSwitchSuppressedByCell[MATRIX_ROWS][MATRIX_COLS] = {};
@@ -490,8 +496,27 @@ void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
     activeOutput = static_cast<int8_t>((activeOutput + 1) % SOLENOID_COUNT);
     digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], HIGH);
 
-    Serial.printf("Output test -> %s (5 V bench proof-of-life only)\n",
-                  CAPTAIN_SOLENOID_NAMES[activeOutput]);
+    // In TEST profile, drive one deterministic matrix lamp blink for clear bench diagnostics.
+    if (CAPTAIN_APP_MODE_IS_TEST) {
+        matrixLampBlinkOn = !matrixLampBlinkOn;
+        captain::protocol::clearLamps(protocolRuntime);
+        if (matrixLinkHealthy && matrixLampBlinkOn) {
+            const uint8_t lampIndex = static_cast<uint8_t>(activeOutput % MATRIX_LAMP_TEST_COUNT);
+            captain::protocol::setLamp(protocolRuntime,
+                                       MATRIX_LAMP_TEST_ROWS[lampIndex],
+                                       MATRIX_LAMP_TEST_COL,
+                                       true);
+        }
+    }
+
+    if (activeOutput == 0) {
+        Serial.printf("Output test cycle: %s -> %s -> %s -> %s -> %s (5 V bench proof-of-life only)\n",
+                      CAPTAIN_SOLENOID_NAMES[0],
+                      CAPTAIN_SOLENOID_NAMES[1],
+                      CAPTAIN_SOLENOID_NAMES[2],
+                      CAPTAIN_SOLENOID_NAMES[3],
+                      CAPTAIN_SOLENOID_NAMES[4]);
+    }
 
     writeDebugOledStatus("Output test", CAPTAIN_SOLENOID_NAMES[activeOutput], "5V proof-of-life");
 }
@@ -589,6 +614,23 @@ void updateMatrixDiagnostics(uint32_t nowMs) {
             }
         }
         matrixLinkHealthyLast = linkHealthy;
+    }
+
+    if (!otaRuntime.inProgress && (nowMs - lastMatrixOledStatusMs) >= MATRIX_OLED_STATUS_INTERVAL_MS) {
+        lastMatrixOledStatusMs = nowMs;
+
+        char txLine[32] = {};
+        char profileLine[24] = {};
+        snprintf(txLine,
+                 sizeof(txLine),
+                 "tx %lu/%lu",
+                 static_cast<unsigned long>(captain::protocol::txSuccessCount(protocolRuntime)),
+                 static_cast<unsigned long>(captain::protocol::txFailureCount(protocolRuntime)));
+        snprintf(profileLine, sizeof(profileLine), "profile %s", CAPTAIN_APP_MODE_NAME);
+
+        writeDebugOledStatus(linkHealthy ? "Matrix link LIVE" : "Matrix link DOWN",
+                             txLine,
+                             profileLine);
     }
 
     if (linkHealthy || (nowMs - lastMatrixDegradedWarnMs < MATRIX_DEGRADED_WARN_INTERVAL_MS)) {
