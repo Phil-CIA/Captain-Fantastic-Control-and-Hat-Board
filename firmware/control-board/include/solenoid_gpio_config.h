@@ -29,7 +29,7 @@ constexpr const char* CAPTAIN_SOLENOID_NAMES[SOLENOID_COUNT] = {
 };
 
 constexpr uint16_t CAPTAIN_SOLENOID_PULSE_MS[SOLENOID_COUNT] = {
-    45,
+    100,  // S2 Outhole - extended pulse for mapping/force validation
     45,
     45,
     40,

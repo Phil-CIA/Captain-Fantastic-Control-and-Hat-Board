@@ -62,6 +62,7 @@ constexpr uint32_t MATRIX_SWITCH_LOG_REPORT_MS = 5000;
 constexpr uint32_t MATRIX_SWITCH_LOG_MAX_PER_REPORT = 20;
 constexpr uint8_t MATRIX_ROWS = 8;
 constexpr uint8_t MATRIX_COLS = 4;
+constexpr uint8_t OUTPUT_TEST_SINGLE_SOLENOID = SOLENOID_S2;
 constexpr uint8_t MATRIX_LAMP_TEST_COUNT = 5;
 constexpr uint8_t MATRIX_LAMP_TEST_ROWS[MATRIX_LAMP_TEST_COUNT] = {0, 1, 2, 3, 4};
 constexpr uint8_t MATRIX_LAMP_TEST_COL = 1;
@@ -74,6 +75,7 @@ bool heartbeatState = false;
 uint32_t lastHeartbeatMs = 0;
 uint32_t lastDisplayMs = 0;
 uint32_t lastOutputTestMs = 0;
+uint32_t solenoidPulseEndMs = 0;  // Track when current pulse should end (real pulse timing)
 uint32_t lastMatrixDegradedWarnMs = 0;
 uint32_t lastMatrixOledStatusMs = 0;
 uint32_t lastMatrixSwitchSuppressedReportMs = 0;
@@ -479,22 +481,30 @@ void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
         if (activeOutput >= 0) {
             digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], LOW);
             activeOutput = -1;
+            solenoidPulseEndMs = 0;
         }
         return;
     }
 
+    // If a pulse is active and past its end time, turn off the solenoid
+    if (activeOutput >= 0 && solenoidPulseEndMs > 0 && now >= solenoidPulseEndMs) {
+        digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], LOW);
+        solenoidPulseEndMs = 0;
+    }
+
+    // Check if it's time to start the next solenoid pulse (~500ms between pulses)
     if (now - lastOutputTestMs < OUTPUT_TEST_INTERVAL_MS) {
         return;
     }
 
     lastOutputTestMs = now;
 
-    if (activeOutput >= 0) {
-        digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], LOW);
-    }
-
-    activeOutput = static_cast<int8_t>((activeOutput + 1) % SOLENOID_COUNT);
+    // Bench mapping mode: repeatedly pulse only S2 (outhole).
+    activeOutput = static_cast<int8_t>(OUTPUT_TEST_SINGLE_SOLENOID);
     digitalWrite(CAPTAIN_SOLENOID_PINS[activeOutput], HIGH);
+    
+    // Set pulse end time based on the solenoid's configured pulse width (40-45ms)
+    solenoidPulseEndMs = now + CAPTAIN_SOLENOID_PULSE_MS[activeOutput];
 
     // In TEST profile, drive one deterministic matrix lamp blink for clear bench diagnostics.
     if (CAPTAIN_APP_MODE_IS_TEST) {
@@ -509,16 +519,13 @@ void runOptionalOutputTest(uint32_t now, bool matrixLinkHealthy) {
         }
     }
 
-    if (activeOutput == 0) {
-        Serial.printf("Output test cycle: %s -> %s -> %s -> %s -> %s (5 V bench proof-of-life only)\n",
-                      CAPTAIN_SOLENOID_NAMES[0],
-                      CAPTAIN_SOLENOID_NAMES[1],
-                      CAPTAIN_SOLENOID_NAMES[2],
-                      CAPTAIN_SOLENOID_NAMES[3],
-                      CAPTAIN_SOLENOID_NAMES[4]);
-    }
+    Serial.printf("Output test fixed channel: %s\n",
+                  CAPTAIN_SOLENOID_NAMES[OUTPUT_TEST_SINGLE_SOLENOID]);
 
-    writeDebugOledStatus("Output test", CAPTAIN_SOLENOID_NAMES[activeOutput], "5V proof-of-life");
+    Serial.printf("Output test -> %s (pulse: %ums)\n",
+                  CAPTAIN_SOLENOID_NAMES[activeOutput],
+                  static_cast<unsigned>(CAPTAIN_SOLENOID_PULSE_MS[activeOutput]));
+    writeDebugOledStatus("Output test", CAPTAIN_SOLENOID_NAMES[activeOutput], "Real pulse timing");
 }
 
 void onMatrixSwitchEdge(uint8_t row, uint8_t col, bool closed, uint32_t nowMs) {
