@@ -75,3 +75,49 @@ Purpose: Start clean in the morning with one practical sequence that gets from b
 
 - Handoff written and pushed target: this file
 - Next operator action: begin at Morning Start Plan step 1
+
+## Switch Recovery Addendum (2026-05-11)
+
+### What We Know
+
+1. Known-good matrix checkpoint exists from the working perspective: `aca9ac0` (matrix chunked OLED milestone, 2026-05-05).
+2. Latest handoff (2026-05-10) indicates transport health is stable:
+   - `rx_pkts` increasing on matrix
+   - `wr_ok` and `rd_ok` increasing on control
+   - checksum/reject alarms no longer noisy
+3. Current failure mode is switch isolation/mapping quality, not basic link up/down.
+4. Current control firmware has a strict burst-drop guard (`MATRIX_MAX_RISING_EDGES_PER_POLL = 4`) that can suppress entire poll windows.
+5. Mapping-mode concept (lamps forced off during mapping capture) is a valid mitigation and must be verified in the exact flashed binary before further tuning.
+
+### What We Need To Know
+
+1. Are real switch presses being dropped by filtering thresholds (control side) versus lost on matrix scan/debounce (matrix side)?
+2. Is lamp-off mapping mode active in the actual build being tested?
+3. Did row/column mapping or active-row assumptions drift between `aca9ac0` and current cleanup state?
+4. Do dropped-burst counts correlate directly with deliberate press windows?
+5. Is the current debounce cadence suppressing short but valid press events?
+
+### Recovery-First Plan (No Gameplay Features Until This Passes)
+
+1. Freeze A/B references:
+   - A = known-good behavior target (`aca9ac0`)
+   - B = current behavior target (latest split-protocol head)
+2. Run identical captures for A and B on same hardware and wiring:
+   - 30s quiet baseline
+   - 15-20 deliberate presses on one target switch
+   - repeat on two additional switches
+3. Compare outcomes:
+   - If A clean and B fails, software regression confirmed.
+   - If both fail, prioritize hardware/wiring/mechanics isolation.
+4. If software regression is confirmed, isolate in this order:
+   - force lamp-off mapping mode
+   - temporarily relax burst-drop threshold for capture build
+   - reduce debounce ticks for capture build
+   - verify row/col mapping and active-row limits
+5. Lock acceptance gate before gameplay coupling resumes:
+   - each tested switch yields one dominant bit in press windows
+   - intentional presses are not suppressed by burst filter
+
+### Hard Stop Rule
+
+Do not proceed to scoring, gameplay callback wiring, or mode expansion until the switch recovery acceptance gate is met and repeatable.
