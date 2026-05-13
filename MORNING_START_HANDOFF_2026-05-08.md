@@ -121,3 +121,48 @@ Purpose: Start clean in the morning with one practical sequence that gets from b
 ### Hard Stop Rule
 
 Do not proceed to scoring, gameplay callback wiring, or mode expansion until the switch recovery acceptance gate is met and repeatable.
+
+---
+
+## Integration Reference: Recovery-to-Gameplay Plan (May 12–13)
+
+A comprehensive next-phase execution plan has been created to advance from baseline validation (timing locked, I2C healthy, S3–S6 solenoid working) toward playable behavior.
+
+**See**: [RECOVERY_TO_GAMEPLAY_PLAN_2026-05-12.md](RECOVERY_TO_GAMEPLAY_PLAN_2026-05-12.md)
+
+### Key Highlights from That Plan
+
+1. **What We Know** (May 12 End-of-Day Status)
+   - Matrix timing locked and acceptance test passed
+   - I2C transport stable under continuous polling
+   - Solenoid S3–S6 verified working on TPS
+   - S2 relay workaround pending installation (parallel stream, not blocking)
+
+2. **What We Need To Know** (Blocking Criteria)
+   - Switch detection quality: one dominant bit per press (A/B capture validation required)
+   - Tilt & Start direct-input paths clean (no cross-talk with matrix)
+   - Lamp delivery to headbox working without frame corruption
+
+3. **S2 Coil Protection Policy** (During Relay Installation & Limited Testing)
+   - Max 2–3 activations per group
+   - 10–15s cool-down between attempts
+   - 60s cool-down between groups
+   - Operator observes coil temperature/sound for abort signals
+   - Policy suspended after relay installation complete
+
+4. **Parallel Work Streams** (May 13–14, ~6–8 hours total)
+   - **Stream A (Hardware)**: Install S2 relay, verify 24V force recovery (~2–4 hours)
+   - **Stream B (Software)**: Execute switch A/B capture validation, run gate analysis, apply feature gates if needed (~4–6 hours)
+
+5. **Gameplay Integration** (Begins After Switch Gate Passes)
+   - Mode scaffolding (Boot → Test → Attract → Gameplay → Error)
+   - Solenoid coupling (switch edge → solenoid action)
+   - Score & lamp state wiring
+
+6. **Definition of Done**
+   - Switch validation gate passed ✅
+   - S2 coil protection enforced or relay installed ✅
+   - One end-to-end switch→solenoid→lamp flow working ✅
+   - All docs updated and pushed ✅
+
+**Execution Sequence**: Start with parallel streams (relay install + switch captures). Switch gate result drives gameplay integration timeline. Reference that plan for detailed command sequences, feature gates, and risk mitigations.
